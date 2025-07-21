@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { Sheet, DollarSign, Percent, Info, TrendingUp, AlertCircle, Loader, ExternalLink, PieChart as PieChartIcon, ChevronsRight, Award, X, Calendar, Repeat, Download, FileText, RefreshCw, ClipboardList, CheckCircle2, Zap, TrendingDown, Eye, Trash2, Briefcase, Edit, Landmark, Target, PlusCircle, Trash, Shield, BarChart2, Activity, AlertTriangle, GitCommit } from 'lucide-react';
 
-// Helper to parse CSV data
+// --- Helper to parse CSV data ---
 const parseCSV = (csvText) => {
     const lines = csvText.split('\n');
     if (lines.length < 2) return [];
@@ -16,8 +16,6 @@ const parseCSV = (csvText) => {
             headers.forEach((header, index) => {
                 const value = values[index] ? values[index].trim().replace(/\r$/, '') : '';
                 
-                // More robust number parsing.
-                // It strips common currency symbols and commas before converting to a number.
                 const numericValue = value.toString().replace(/[^0-9.-]+/g,"");
                 
                 if (header.toLowerCase().includes('amount') || header.toLowerCase().includes('balance') || header.toLowerCase().includes('payment') || header.toLowerCase().includes('apr') || header.toLowerCase().includes('value')) {
@@ -32,7 +30,7 @@ const parseCSV = (csvText) => {
     return data;
 };
 
-// Colors for the pie charts
+// --- Colors for Charts ---
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#ff4d4d', '#4BC0C0', '#9966FF', '#FF6384', '#36A2EB'];
 const ALLOCATION_COLORS = { 'Growth': '#22c55e', 'Balanced': '#facc15', 'Conservative': '#3b82f6' };
 
@@ -47,7 +45,6 @@ const calculatePayoff = (debts, strategy, extraPayment = 0, snowflakePayments = 
     let totalInterestPaid = 0;
     let debtPayoffDates = {};
 
-    // Initial state at month 0
     const initialHistoryEntry = { month: 0, totalBalance: currentDebts.reduce((sum, d) => sum + d.Balance, 0) };
     currentDebts.forEach(debt => { initialHistoryEntry[debt.id] = debt.Balance; });
     history.push(initialHistoryEntry);
