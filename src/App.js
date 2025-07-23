@@ -136,6 +136,572 @@ const Tooltip = ({ text, children }) => {
     );
 };
 
+// --- Child Components defined outside App for stability ---
+
+const Instructions = () => ( <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md mb-6 shadow-sm"> <h3 className="text-lg font-semibold flex items-center"><Info className="h-6 w-6 mr-3" />How to use this tool</h3> <div className="text-sm space-y-2 mt-2"> <p>This tool visualizes your financial data from Google Sheets. To get started:</p> <p>1. <strong>Use the Template:</strong> Start by making a copy of the official <a href="https://docs.google.com/spreadsheets/d/1hD7oQM8cgB9EBhs1wHuBgaSFOwLH1a_TGg4jU84vfFw/edit?usp=sharing" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-semibold">Template Sheet <ExternalLink className="h-3 w-3 ml-1 inline"/></a>. It has the required tabs.</p> <p>2. <strong>Publish Each Tab:</strong> For each tab you want to use ('Debts', 'Bills', 'Income', 'Investments'), you must publish it to the web. Click on the tab, then go to <code className="bg-blue-100 text-blue-800 px-1 rounded">File</code> &rarr; <code className="bg-blue-100 text-blue-800 px-1 rounded">Share</code> &rarr; <code className="bg-blue-100 text-blue-800 px-1 rounded">Publish to web</code>. In the dialog, select the specific sheet, choose 'Comma-separated values (.csv)', and click Publish. Copy the unique generated link for that tab.</p> <p>3. <strong>Paste Links Above:</strong> Paste each link into its corresponding input field above these instructions.</p></div></div> );
+const StatCard = ({ icon, title, value, baseValue, color, tooltipText, description }) => ( <div className="bg-white p-4 rounded-lg shadow-md transition-transform hover:scale-105 hover:-translate-y-1"> <div className="flex items-center"> <div className={`p-3 rounded-full mr-4 ${color}`}>{icon}</div> <div> <div className="flex items-center"> <p className="text-sm text-gray-500">{title}</p> {tooltipText && ( <Tooltip text={tooltipText}> <Info size={14} className="ml-1.5 text-gray-400 hover:text-gray-600 cursor-pointer" /> </Tooltip> )} </div> <p className="text-2xl font-bold text-gray-800">{value}</p> </div> </div> {baseValue && value !== baseValue && ( <div className="mt-2 text-sm text-center"> <span className="text-gray-500 line-through">{baseValue}</span> <ChevronsRight className="inline h-4 w-4 mx-1 text-green-500" /> <span className="font-bold text-green-600">{value}</span> </div> )} {description && <p className="text-xs text-gray-500 mt-2">{description}</p>}</div> );
+const ImpactModal = ({ impactData, setShowImpactModal }) => ( <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"> <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full text-center relative"> <button onClick={() => setShowImpactModal(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"><X /></button> <Award className="h-16 w-16 text-yellow-400 mx-auto mb-4" /> <h2 className="text-2xl font-bold text-gray-800 mb-2">Amazing!</h2> <p className="text-lg text-gray-600">That <span className="font-bold text-green-600">${impactData.amount.toLocaleString()}</span> payment made a huge difference!</p> <div className="mt-6 space-y-3"> <div className="bg-green-50 p-3 rounded-lg"> <p className="text-sm text-green-800">You'll be debt-free</p> <p className="text-xl font-bold text-green-600">{impactData.monthsSaved} months sooner!</p> </div> <div className="bg-blue-50 p-3 rounded-lg"> <p className="text-sm text-blue-800">You'll save an extra</p> <p className="text-xl font-bold text-blue-600">${impactData.interestSaved.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} in interest!</p> </div> </div> </div> </div> );
+const AmortizationModal = ({ amortizationData, setShowAmortizationModal }) => ( <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"> <div className="bg-white rounded-lg shadow-2xl p-6 max-w-2xl w-full text-center relative"> <button onClick={() => setShowAmortizationModal(false)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><X /></button> <h2 className="text-2xl font-bold text-gray-800 mb-4">Amortization Schedule for {amortizationData?.id}</h2> <div className="overflow-y-auto h-96"><table className="w-full text-sm text-left"><thead className="bg-gray-100 text-xs text-gray-700 uppercase sticky top-0"><tr><th className="p-2">Month</th><th className="p-2 text-right">Payment</th><th className="p-2 text-right">Principal</th><th className="p-2 text-right">Interest</th><th className="p-2 text-right">Remaining Balance</th></tr></thead><tbody>{amortizationData?.amortization.map(row => ( <tr key={row.month} className="border-b"><td className="p-2">{row.month}</td><td className="p-2 text-right">${row.payment.toFixed(2)}</td><td className="p-2 text-right">${row.principal.toFixed(2)}</td><td className="p-2 text-right">${row.interest.toFixed(2)}</td><td className="p-2 text-right">${row.balance.toFixed(2)}</td></tr>))}</tbody></table></div></div></div> );
+const StrategyCard = ({ title, description, value, icon, selected, setStrategy }) => ( <div onClick={() => setStrategy(value)} className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}> <div className="flex justify-between items-center"> <div className="flex items-center"> {icon} <h4 className="font-bold ml-2">{title}</h4> </div> {selected && <CheckCircle2 className="text-blue-500" />} </div> <p className="text-sm text-gray-600 mt-1">{description}</p> </div> );
+const dtiTooltipText = ( <div className="text-left space-y-2"> <p>Your Debt-to-Income (DTI) ratio is all your monthly debt payments divided by your gross monthly income. Lenders use it to measure your ability to manage payments.</p> <div> <p className="font-bold">General Guidelines:</p> <ul className="list-disc list-inside text-xs"> <li><span className="font-semibold text-green-400">36% or less:</span> Optimal</li> <li><span className="font-semibold text-yellow-400">37% to 42%:</span> Manageable</li> <li><span className="font-semibold text-orange-400">43% to 49%:</span> Cause for concern</li> <li><span className="font-semibold text-red-400">50% or more:</span> Dangerous</li> </ul> </div> </div> );
+
+const InvestmentGrowthCalculator = ({ startingAmount: initialStartingAmount, isForPdf = false }) => {
+    const [startingAmount, setStartingAmount] = useState(initialStartingAmount);
+    const [monthlyContribution, setMonthlyContribution] = useState(500);
+    const [annualReturn, setAnnualReturn] = useState(7);
+    const [yearsToGrow, setYearsToGrow] = useState(20);
+
+    useEffect(() => {
+        setStartingAmount(initialStartingAmount);
+    }, [initialStartingAmount]);
+    
+    const projectionData = useMemo(() => {
+        const data = [];
+        let currentValue = startingAmount;
+        const monthlyReturnRate = (annualReturn / 100) / 12;
+
+        for (let year = 0; year <= yearsToGrow; year++) {
+            data.push({ year: `Year ${year}`, value: currentValue });
+            if (year < yearsToGrow) {
+                for (let month = 1; month <= 12; month++) {
+                    currentValue = (currentValue + monthlyContribution) * (1 + monthlyReturnRate);
+                }
+            }
+        }
+        return data;
+    }, [startingAmount, monthlyContribution, annualReturn, yearsToGrow]);
+
+    return (
+        <div id="investment-growth-projection" className="bg-white p-6 rounded-lg shadow-md mt-8">
+            <h3 className="text-xl font-bold mb-4">Investment Growth Projection</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div>
+                    <label className="text-sm font-medium text-gray-700">Starting Principal</label>
+                    <div className="relative mt-1">
+                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/>
+                         <input type="number" value={startingAmount} onChange={e => setStartingAmount(Number(e.target.value))} className="w-full pl-8 border-gray-300 rounded-md shadow-sm"/>
+                    </div>
+                </div>
+                <div>
+                    <label className="text-sm font-medium text-gray-700">Monthly Contribution</label>
+                    <div className="relative mt-1">
+                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/>
+                         <input type="number" value={monthlyContribution} onChange={e => setMonthlyContribution(Number(e.target.value))} className="w-full pl-8 border-gray-300 rounded-md shadow-sm"/>
+                    </div>
+                </div>
+                 <div>
+                    <label className="text-sm font-medium text-gray-700">Est. Annual Return (%)</label>
+                    <div className="relative mt-1">
+                         <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/>
+                         <input type="number" value={annualReturn} onChange={e => setAnnualReturn(Number(e.target.value))} className="w-full pl-8 border-gray-300 rounded-md shadow-sm"/>
+                    </div>
+                </div>
+                 <div>
+                    <label className="text-sm font-medium text-gray-700">Years to Project</label>
+                    <div className="relative mt-1">
+                         <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/>
+                         <input type="number" value={yearsToGrow} onChange={e => setYearsToGrow(Number(e.target.value))} className="w-full pl-8 border-gray-300 rounded-md shadow-sm"/>
+                    </div>
+                </div>
+            </div>
+            <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={projectionData} isAnimationActive={!isForPdf}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="year" />
+                    <YAxis tickFormatter={(value) => `$${(value/1000).toLocaleString()}k`} />
+                    <RechartsTooltip formatter={(value) => `$${value.toLocaleString(undefined, {maximumFractionDigits: 0})}`} />
+                    <Legend />
+                    <Line type="monotone" dataKey="value" name="Projected Value" stroke="#14b8a6" strokeWidth={3} dot={false} />
+                </LineChart>
+            </ResponsiveContainer>
+        </div>
+    );
+};
+
+ const RetirementReadinessSimulator = ({ startingAmount }) => {
+    const [currentAge, setCurrentAge] = useState(30);
+    const [retirementAge, setRetirementAge] = useState(65);
+    const [targetAnnualIncome, setTargetAnnualIncome] = useState(80000);
+    const [monthlyContribution, setMonthlyContribution] = useState(500);
+    const [annualReturn, setAnnualReturn] = useState(7);
+
+    const { requiredNestEgg, projectedValue, shortfall, surplus } = useMemo(() => {
+        const yearsToGrow = retirementAge - currentAge;
+        if (yearsToGrow <= 0) return { requiredNestEgg: 0, projectedValue: startingAmount, shortfall: 0, surplus: 0};
+
+        const requiredNestEgg = targetAnnualIncome * 25; // 4% rule
+
+        let projectedValue = startingAmount;
+        const monthlyReturnRate = (annualReturn / 100) / 12;
+        const totalMonths = yearsToGrow * 12;
+
+        for (let month = 1; month <= totalMonths; month++) {
+            projectedValue = (projectedValue + monthlyContribution) * (1 + monthlyReturnRate);
+        }
+        
+        const difference = projectedValue - requiredNestEgg;
+        const shortfall = difference < 0 ? Math.abs(difference) : 0;
+        const surplus = difference > 0 ? difference : 0;
+
+        return { requiredNestEgg, projectedValue, shortfall, surplus };
+    }, [startingAmount, currentAge, retirementAge, targetAnnualIncome, monthlyContribution, annualReturn]);
+    
+    const simulatorTooltipText = (
+        <div className="text-left space-y-2">
+            <p>This tool estimates if you're on track for retirement based on your inputs.</p>
+            <p className="font-bold">Required Nest Egg:</p>
+            <p>Calculated using the 25x rule, which is your Target Annual Income multiplied by 25. This is based on the 4% safe withdrawal rate.</p>
+            <p className="font-bold">Projected Portfolio:</p>
+            <p>Forecasts the future value of your investments based on your current age, retirement age, contributions, and estimated return.</p>
+        </div>
+    );
+
+    return (
+        <div id="retirement-readiness-simulator" className="bg-white p-6 rounded-lg shadow-md mt-8">
+            <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-xl font-bold">Retirement Readiness Simulator</h3>
+                <Tooltip text={simulatorTooltipText}>
+                    <Info size={16} className="text-gray-400 cursor-pointer" />
+                </Tooltip>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+                <div><label className="text-sm font-medium text-gray-700">Current Age</label><input type="number" value={currentAge} onChange={e => setCurrentAge(Number(e.target.value))} className="mt-1 w-full border-gray-300 rounded-md shadow-sm"/></div>
+                <div><label className="text-sm font-medium text-gray-700">Retirement Age</label><input type="number" value={retirementAge} onChange={e => setRetirementAge(Number(e.target.value))} className="mt-1 w-full border-gray-300 rounded-md shadow-sm"/></div>
+                <div><label className="text-sm font-medium text-gray-700">Target Annual Income</label><div className="relative mt-1"><DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/><input type="number" value={targetAnnualIncome} onChange={e => setTargetAnnualIncome(Number(e.target.value))} className="w-full pl-8 border-gray-300 rounded-md shadow-sm"/></div></div>
+                <div><label className="text-sm font-medium text-gray-700">Monthly Contribution</label><div className="relative mt-1"><DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/><input type="number" value={monthlyContribution} onChange={e => setMonthlyContribution(Number(e.target.value))} className="w-full pl-8 border-gray-300 rounded-md shadow-sm"/></div></div>
+                <div><label className="text-sm font-medium text-gray-700">Est. Annual Return (%)</label><div className="relative mt-1"><Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/><input type="number" value={annualReturn} onChange={e => setAnnualReturn(Number(e.target.value))} className="w-full pl-8 border-gray-300 rounded-md shadow-sm"/></div></div>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                    <div><p className="text-sm text-gray-500">Required Nest Egg</p><p className="text-2xl font-bold text-gray-800">${requiredNestEgg.toLocaleString(undefined, {maximumFractionDigits: 0})}</p></div>
+                    <div><p className="text-sm text-gray-500">Projected Portfolio</p><p className="text-2xl font-bold text-gray-800">${projectedValue.toLocaleString(undefined, {maximumFractionDigits: 0})}</p></div>
+                    <div>
+                        {surplus > 0 && <><p className="text-sm text-green-600">Projected Surplus</p><p className="text-2xl font-bold text-green-600">${surplus.toLocaleString(undefined, {maximumFractionDigits: 0})}</p></>}
+                        {shortfall > 0 && <><p className="text-sm text-red-600">Projected Shortfall</p><p className="text-2xl font-bold text-red-600">${shortfall.toLocaleString(undefined, {maximumFractionDigits: 0})}</p></>}
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+const FinancialGoalSetting = ({ portfolioValue, goals, setGoals }) => {
+    const [goalName, setGoalName] = useState('');
+    const [targetAmount, setTargetAmount] = useState('');
+    const [targetDate, setTargetDate] = useState('');
+    const [showPlanner, setShowPlanner] = useState(null);
+
+    const addGoal = () => {
+        if (goalName && targetAmount && targetDate) {
+            setGoals([...goals, { id: Date.now(), name: goalName, amount: Number(targetAmount), date: targetDate, plan: null }]);
+            setGoalName('');
+            setTargetAmount('');
+            setTargetDate('');
+        }
+    };
+
+    const removeGoal = (id) => {
+        setGoals(goals.filter(goal => goal.id !== id));
+    };
+
+    const createPlan = (id) => {
+        const goal = goals.find(g => g.id === id);
+        if (!goal) return;
+
+        const monthsRemaining = (new Date(goal.date) - new Date()) / (1000 * 60 * 60 * 24 * 30.44);
+        if (monthsRemaining <= 0) {
+             goal.plan = { requiredMonthly: Infinity };
+             setGoals([...goals]);
+             return;
+        }
+
+        const annualReturn = 0.07; // Assuming 7%
+        const monthlyReturn = annualReturn / 12;
+        
+        // Future value of current portfolio portion (simplified for this example)
+        const currentAllocation = Math.min(portfolioValue, goal.amount);
+        const futureValueOfCurrent = currentAllocation * Math.pow(1 + monthlyReturn, monthsRemaining);
+        
+        const remainingAmount = goal.amount - futureValueOfCurrent;
+        
+        if (remainingAmount <= 0) {
+            goal.plan = { requiredMonthly: 0 };
+            setGoals([...goals]);
+            return;
+        }
+
+        const requiredMonthly = (remainingAmount * monthlyReturn) / (Math.pow(1 + monthlyReturn, monthsRemaining) - 1);
+        
+        goal.plan = { requiredMonthly };
+        setGoals([...goals]);
+        setShowPlanner(id);
+    };
+
+    return (
+        <div className="bg-white p-6 rounded-lg shadow-md mt-8">
+            <h3 className="text-xl font-bold mb-4">Financial Goals</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg">
+                <input type="text" value={goalName} onChange={e => setGoalName(e.target.value)} placeholder="Goal Name (e.g., House Down Payment)" className="border-gray-300 rounded-md shadow-sm"/>
+                <input type="number" value={targetAmount} onChange={e => setTargetAmount(e.target.value)} placeholder="Target Amount" className="border-gray-300 rounded-md shadow-sm"/>
+                <input type="date" value={targetDate} onChange={e => setTargetDate(e.target.value)} className="border-gray-300 rounded-md shadow-sm"/>
+                <button onClick={addGoal} className="bg-teal-500 text-white font-bold rounded-md hover:bg-teal-600 flex items-center justify-center gap-2"><PlusCircle size={16}/> Add Goal</button>
+            </div>
+
+            <div className="space-y-4">
+                {goals.map(goal => {
+                    const progress = Math.min((portfolioValue / goal.amount) * 100, 100);
+                    return (
+                        <div key={goal.id} className="p-4 border rounded-lg">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <h4 className="font-bold">{goal.name}</h4>
+                                    <p className="text-sm text-gray-600">${goal.amount.toLocaleString()} by {new Date(goal.date).toLocaleDateString()}</p>
+                                </div>
+                                <button onClick={() => removeGoal(goal.id)} className="text-red-500 hover:text-red-700"><Trash size={16}/></button>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                                <div className="bg-teal-600 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
+                            </div>
+                            <div className="text-right text-xs mt-1">{progress.toFixed(0)}% Funded</div>
+
+                            <button onClick={() => createPlan(goal.id)} className="text-sm font-semibold text-teal-600 hover:underline mt-2">Create Plan</button>
+                            
+                            {showPlanner === goal.id && goal.plan && (
+                                <div className="mt-2 p-3 bg-teal-50 rounded-lg text-center">
+                                    {goal.plan.requiredMonthly === Infinity ? (
+                                        <p className="text-red-600 font-semibold">This goal's date is in the past.</p>
+                                    ) : goal.plan.requiredMonthly <= 0 ? (
+                                        <p className="text-green-600 font-semibold">Congratulations! You are on track to meet this goal without additional contributions.</p>
+                                    ) : (
+                                        <p className="text-teal-800">To reach this goal, you need to contribute <span className="font-bold">${goal.plan.requiredMonthly.toLocaleString(undefined, {maximumFractionDigits: 0})}</span> per month.</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )
+                })}
+            </div>
+        </div>
+    );
+};
+
+const RiskToleranceQuiz = ({ onQuizComplete }) => {
+    const questions = [
+        {
+            question: "When you think about investing, what is your primary goal?",
+            options: [
+                { text: "Preserving my capital is most important.", value: 1 },
+                { text: "A mix of growth and capital preservation.", value: 2 },
+                { text: "Maximizing long-term growth, even with some risk.", value: 3 }
+            ]
+        },
+        {
+            question: "How would you react to a 20% drop in your portfolio's value in a single year?",
+            options: [
+                { text: "Panic and sell everything.", value: 1 },
+                { text: "Feel concerned, but wait it out.", value: 2 },
+                { text: "See it as a buying opportunity.", value: 3 }
+            ]
+        },
+        {
+            question: "What is your investment time horizon?",
+            options: [
+                { text: "Short-term (less than 3 years)", value: 1 },
+                { text: "Medium-term (3-10 years)", value: 2 },
+                { text: "Long-term (more than 10 years)", value: 3 }
+            ]
+        },
+        {
+            question: "How much of your portfolio are you comfortable allocating to higher-risk assets like stocks?",
+            options: [
+                { text: "Less than 25%", value: 1 },
+                { text: "25% to 75%", value: 2 },
+                { text: "More than 75%", value: 3 }
+            ]
+        },
+        {
+            question: "How would you describe your knowledge of investments?",
+            options: [
+                { text: "Beginner", value: 1 },
+                { text: "Intermediate", value: 2 },
+                { text: "Advanced", value: 3 }
+            ]
+        }
+    ];
+
+    const [currentQuestion, setCurrentQuestion] = useState(0);
+    const [answers, setAnswers] = useState({});
+    const [showResult, setShowResult] = useState(false);
+
+    const handleAnswer = (questionIndex, value) => {
+        setAnswers({ ...answers, [questionIndex]: value });
+    };
+
+    const calculateResult = () => {
+        const totalScore = Object.values(answers).reduce((sum, value) => sum + value, 0);
+        let profile;
+        if (totalScore <= 6) {
+            profile = { name: "Conservative", description: "Prefers safety and capital preservation over high returns.", icon: Shield, color: "bg-blue-500" };
+        } else if (totalScore <= 11) {
+            profile = { name: "Moderate", description: "Seeks a balance between growth and risk, comfortable with some fluctuations.", icon: BarChart2, color: "bg-yellow-500" };
+        } else {
+            profile = { name: "Aggressive", description: "Focuses on maximizing long-term returns and is comfortable with significant market volatility.", icon: Activity, color: "bg-red-500" };
+        }
+        onQuizComplete(profile);
+        setShowResult(true);
+    };
+
+    const nextQuestion = () => {
+        if (currentQuestion < questions.length - 1) {
+            setCurrentQuestion(currentQuestion + 1);
+        } else {
+            calculateResult();
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-2xl p-8 max-w-lg w-full relative">
+                {!showResult ? (
+                    <>
+                        <button onClick={() => onQuizComplete(null, true)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"><X /></button>
+                        <h3 className="text-xl font-bold mb-2">Question {currentQuestion + 1}/{questions.length}</h3>
+                        <p className="text-lg text-gray-700 mb-6">{questions[currentQuestion].question}</p>
+                        <div className="space-y-3">
+                            {questions[currentQuestion].options.map((option, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => handleAnswer(currentQuestion, option.value)}
+                                    className={`w-full text-left p-4 rounded-lg border-2 transition-all ${answers[currentQuestion] === option.value ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'}`}
+                                >
+                                    {option.text}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="flex justify-end mt-6">
+                            <button
+                                onClick={nextQuestion}
+                                disabled={answers[currentQuestion] === undefined}
+                                className="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            >
+                                {currentQuestion < questions.length - 1 ? "Next" : "Finish"}
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                     <div className="text-center">
+                         <h2 className="text-2xl font-bold text-gray-800 mb-2">Quiz Complete!</h2>
+                         <button onClick={() => onQuizComplete(null, true)} className="mt-6 bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700">Done</button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, setGoals, generateInvestmentPDF, investmentPdfLoading, pdfLibrariesLoaded, totalValue, simplifiedAllocation }) => {
+    const [showQuiz, setShowQuiz] = useState(false);
+
+    const targetAllocations = {
+        Conservative: [{ name: 'Growth', value: 25 }, { name: 'Balanced', value: 40 }, { name: 'Conservative', value: 35 }],
+        Moderate: [{ name: 'Growth', value: 60 }, { name: 'Balanced', value: 30 }, { name: 'Conservative', value: 10 }],
+        Aggressive: [{ name: 'Growth', value: 85 }, { name: 'Balanced', value: 10 }, { name: 'Conservative', value: 5 }],
+    };
+
+    const handleQuizComplete = (profile, close = false) => {
+        if (profile) setRiskProfile(profile);
+        if (close) setShowQuiz(false);
+    };
+
+    const RebalancingSuggestions = () => {
+        if (!riskProfile || totalValue <= 0) return null;
+    
+        const currentAllocationMap = new Map(simplifiedAllocation.map(item => [item.name, (item.value / totalValue) * 100]));
+        const targetAllocationMap = new Map(targetAllocations[riskProfile.name].map(item => [item.name, item.value]));
+        
+        const categories = ['Growth', 'Balanced', 'Conservative'];
+        const allocationDiffs = categories.map(name => {
+            const currentPercent = currentAllocationMap.get(name) || 0;
+            const targetPercent = targetAllocationMap.get(name) || 0;
+            return {
+                name,
+                diff: currentPercent - targetPercent,
+                currentValue: (currentPercent / 100) * totalValue,
+                targetValue: (targetPercent / 100) * totalValue
+            };
+        });
+    
+        const needsRebalancing = allocationDiffs.some(d => Math.abs(d.diff) > 5);
+    
+        if (!needsRebalancing) {
+            return (
+                 <div className="mt-6 p-4 rounded-lg flex items-start gap-4 bg-green-100 text-green-800">
+                    <CheckCircle2 className="h-6 w-6 mt-1 flex-shrink-0" />
+                    <p className="text-sm">Your portfolio's allocation is well-aligned with your risk profile. No rebalancing needed at this time.</p>
+                </div>
+            );
+        }
+        
+        const toSell = allocationDiffs.filter(d => d.diff > 5);
+        const toBuy = allocationDiffs.filter(d => d.diff < -5);
+
+        const rebalancingTooltip = (
+            <div className="text-left space-y-2">
+                <p><strong className="text-green-400">Growth:</strong> Higher potential returns, higher risk. <br/><em>E.g., Individual Stocks, Crypto, Growth ETFs.</em></p>
+                <p><strong className="text-yellow-400">Balanced:</strong> A mix of growth and stability. <br/><em>E.g., Index Funds (S&P 500), Mutual Funds, REITs.</em></p>
+                <p><strong className="text-blue-400">Conservative:</strong> Lower risk, focus on capital preservation. <br/><em>E.g., Bonds, Cash, CDs, Money Market.</em></p>
+            </div>
+        );
+    
+        return (
+            <div className="mt-4 p-4 border-2 border-orange-300 bg-orange-50 rounded-lg">
+                <div className="flex items-start gap-3">
+                    <GitCommit className="h-6 w-6 text-orange-600 flex-shrink-0" />
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-orange-800">Rebalancing Actions Suggested</h4>
+                            <Tooltip text={rebalancingTooltip}>
+                                <Info size={16} className="text-gray-400 cursor-pointer" />
+                            </Tooltip>
+                        </div>
+                        <p className="text-sm text-orange-700 mt-1">Your portfolio has drifted from its target. Consider the following actions to realign with your '{riskProfile.name}' profile:</p>
+                    </div>
+                </div>
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    {toSell.length > 0 && (
+                        <div>
+                            <p className="font-semibold mb-2 text-red-600">Consider Selling:</p>
+                            <ul className="space-y-1">
+                                {toSell.map(item => (
+                                    <li key={item.name}>
+                                        ~${(item.currentValue - item.targetValue).toLocaleString(undefined, {maximumFractionDigits:0})} of <span className="font-medium">{item.name}</span> assets.
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    {toBuy.length > 0 && (
+                        <div>
+                            <p className="font-semibold mb-2 text-green-600">Consider Buying:</p>
+                             <ul className="space-y-1">
+                                {toBuy.map(item => (
+                                    <li key={item.name}>
+                                        ~${(item.targetValue - item.currentValue).toLocaleString(undefined, {maximumFractionDigits:0})} of <span className="font-medium">{item.name}</span> assets.
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    if (data.length === 0) {
+        return (
+            <div className="text-center p-10 bg-white rounded-lg shadow-md">
+                <h2 className="text-2xl font-bold text-gray-800">Investment Portfolio</h2>
+                <p className="text-gray-500 mt-2">No investment data found. Please add a link to your 'Investments' sheet to see your portfolio.</p>
+            </div>
+        )
+    }
+
+    return (
+        <>
+            {showQuiz && <RiskToleranceQuiz onQuizComplete={handleQuizComplete} />}
+            <div className="flex flex-col md:flex-row justify-between md:items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-800">Investment Portfolio</h2>
+                <button
+                    onClick={generateInvestmentPDF}
+                    disabled={!pdfLibrariesLoaded || investmentPdfLoading}
+                    className="mt-4 md:mt-0 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                    {investmentPdfLoading ? <Loader className="animate-spin h-4 w-4" /> : <Download size={16}/>}
+                    {investmentPdfLoading ? 'Generating...' : 'Download Report'}
+                </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <StatCard icon={<Landmark className="h-6 w-6 text-white"/>} title="Total Portfolio Value" value={`$${totalValue.toLocaleString(undefined, {maximumFractionDigits: 2})}`} color="bg-teal-500" />
+                {riskProfile ? (
+                    <StatCard 
+                        icon={React.createElement(riskProfile.icon, {className: "h-6 w-6 text-white"})}
+                        title="Your Risk Profile"
+                        value={riskProfile.name}
+                        color={riskProfile.color}
+                        description={riskProfile.description}
+                    />
+                ) : (
+                    <div className="bg-white p-4 rounded-lg shadow-md flex items-center justify-center text-center">
+                        <div>
+                            <p className="font-bold">Discover Your Investor Type</p>
+                            <button onClick={() => setShowQuiz(true)} className="mt-2 bg-teal-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-600 text-sm">Take Risk Quiz</button>
+                        </div>
+                    </div>
+                )}
+                <div className="bg-white p-4 rounded-lg shadow-md flex items-center justify-center text-center">
+                    <div>
+                        <h4 className="font-bold">Strategy Tools</h4>
+                        <p className="text-sm text-gray-600 mb-2">Refine your investment approach.</p>
+                        <button onClick={() => setShowQuiz(true)} className="bg-teal-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-600 text-sm">
+                            {riskProfile ? 'Retake Risk Quiz' : 'Take Risk Quiz'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {riskProfile && (
+                <div id="allocation-comparison-section" className="bg-white p-6 rounded-lg shadow-md mb-8">
+                    <h3 className="text-xl font-bold mb-4">Allocation Comparison</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div className="text-center">
+                            <h4 className="font-semibold mb-2">Your Current Allocation</h4>
+                            <ResponsiveContainer width="100%" height={250}>
+                                <PieChart>
+                                    <Pie data={simplifiedAllocation} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} isAnimationActive={false}>
+                                        {simplifiedAllocation.map((entry) => (<Cell key={entry.name} fill={ALLOCATION_COLORS[entry.name]} />))}
+                                    </Pie>
+                                    <RechartsTooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div className="text-center">
+                            <h4 className="font-semibold mb-2">Target for '{riskProfile.name}' Profile</h4>
+                            <ResponsiveContainer width="100%" height={250}>
+                                <PieChart>
+                                    <Pie data={targetAllocations[riskProfile.name]} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, value }) => `${name} ${value}%`} isAnimationActive={false}>
+                                        {targetAllocations[riskProfile.name].map((entry) => (<Cell key={entry.name} fill={ALLOCATION_COLORS[entry.name]} />))}
+                                    </Pie>
+                                    <RechartsTooltip formatter={(value) => `${value}%`} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                    <RebalancingSuggestions />
+                </div>
+            )}
+
+            <div className="bg-white p-6 rounded-lg shadow-md mt-8">
+                <h3 className="text-xl font-bold mb-4">Investment Details</h3>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm"><thead className="bg-gray-100 text-xs text-gray-700 uppercase"><tr><th className="p-3">Investment Name</th><th className="p-3">Type</th><th className="p-3 text-right">Value</th></tr></thead><tbody>{data.map((item, index) => ( <tr key={index} className="border-b hover:bg-gray-50"><td className="p-3 font-medium">{item['Investment Name']}</td><td className="p-3">{item.Type}</td><td className="p-3 text-right">${(item.Value || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>))}</tbody></table>
+                </div>
+            </div>
+            <FinancialGoalSetting portfolioValue={totalValue} goals={goals} setGoals={setGoals} />
+            <InvestmentGrowthCalculator startingAmount={totalValue} isForPdf={investmentPdfLoading} />
+            <RetirementReadinessSimulator startingAmount={totalValue} />
+        </>
+    )
+}
+
+const Footer = () => (
+    <footer className="mt-12 text-center text-gray-500 text-xs">
+        <p>&copy; {new Date().getFullYear()} www.smartstepstowealth.com. All Rights Reserved.</p>
+        <p className="mt-2 max-w-2xl mx-auto">
+            Disclaimer: This tool is for informational and illustrative purposes only and does not constitute financial, legal, or tax advice. The projections and information provided are based on the data you input and certain assumptions, and are not a guarantee of future results. Please consult with a qualified professional before making any financial decisions.
+        </p>
+    </footer>
+);
 
 const App = () => {
     const [debtSheetUrl, setDebtSheetUrl] = useState('');
@@ -747,575 +1313,10 @@ const App = () => {
       return <span style={{ color: isActive ? '#333' : '#AAA', cursor: 'pointer' }}>{value}</span>;
     };
 
-    const Instructions = () => ( <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md mb-6 shadow-sm"> <h3 className="text-lg font-semibold flex items-center"><Info className="h-6 w-6 mr-3" />How to use this tool</h3> <div className="text-sm space-y-2 mt-2"> <p>This tool visualizes your financial data from Google Sheets. To get started:</p> <p>1. <strong>Use the Template:</strong> Start by making a copy of the official <a href="https://docs.google.com/spreadsheets/d/1hD7oQM8cgB9EBhs1wHuBgaSFOwLH1a_TGg4jU84vfFw/edit?usp=sharing" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-semibold">Template Sheet <ExternalLink className="h-3 w-3 ml-1 inline"/></a>. It has the required tabs.</p> <p>2. <strong>Publish Each Tab:</strong> For each tab you want to use ('Debts', 'Bills', 'Income', 'Investments'), you must publish it to the web. Click on the tab, then go to <code className="bg-blue-100 text-blue-800 px-1 rounded">File</code> &rarr; <code className="bg-blue-100 text-blue-800 px-1 rounded">Share</code> &rarr; <code className="bg-blue-100 text-blue-800 px-1 rounded">Publish to web</code>. In the dialog, select the specific sheet, choose 'Comma-separated values (.csv)', and click Publish. Copy the unique generated link for that tab.</p> <p>3. <strong>Paste Links Above:</strong> Paste each link into its corresponding input field above these instructions.</p></div></div> );
-    const StatCard = ({ icon, title, value, baseValue, color, tooltipText, description }) => ( <div className="bg-white p-4 rounded-lg shadow-md transition-transform hover:scale-105 hover:-translate-y-1"> <div className="flex items-center"> <div className={`p-3 rounded-full mr-4 ${color}`}>{icon}</div> <div> <div className="flex items-center"> <p className="text-sm text-gray-500">{title}</p> {tooltipText && ( <Tooltip text={tooltipText}> <Info size={14} className="ml-1.5 text-gray-400 hover:text-gray-600 cursor-pointer" /> </Tooltip> )} </div> <p className="text-2xl font-bold text-gray-800">{value}</p> </div> </div> {scenarioMode && baseValue && value !== baseValue && ( <div className="mt-2 text-sm text-center"> <span className="text-gray-500 line-through">{baseValue}</span> <ChevronsRight className="inline h-4 w-4 mx-1 text-green-500" /> <span className="font-bold text-green-600">{value}</span> </div> )} {description && <p className="text-xs text-gray-500 mt-2">{description}</p>}</div> );
-    const ImpactModal = () => ( <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"> <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full text-center relative"> <button onClick={() => setShowImpactModal(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"><X /></button> <Award className="h-16 w-16 text-yellow-400 mx-auto mb-4" /> <h2 className="text-2xl font-bold text-gray-800 mb-2">Amazing!</h2> <p className="text-lg text-gray-600">That <span className="font-bold text-green-600">${impactData.amount.toLocaleString()}</span> payment made a huge difference!</p> <div className="mt-6 space-y-3"> <div className="bg-green-50 p-3 rounded-lg"> <p className="text-sm text-green-800">You'll be debt-free</p> <p className="text-xl font-bold text-green-600">{impactData.monthsSaved} months sooner!</p> </div> <div className="bg-blue-50 p-3 rounded-lg"> <p className="text-sm text-blue-800">You'll save an extra</p> <p className="text-xl font-bold text-blue-600">${impactData.interestSaved.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} in interest!</p> </div> </div> </div> </div> );
-    const AmortizationModal = () => ( <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"> <div className="bg-white rounded-lg shadow-2xl p-6 max-w-2xl w-full text-center relative"> <button onClick={() => setShowAmortizationModal(false)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><X /></button> <h2 className="text-2xl font-bold text-gray-800 mb-4">Amortization Schedule for {amortizationData?.id}</h2> <div className="overflow-y-auto h-96"><table className="w-full text-sm text-left"><thead className="bg-gray-100 text-xs text-gray-700 uppercase sticky top-0"><tr><th className="p-2">Month</th><th className="p-2 text-right">Payment</th><th className="p-2 text-right">Principal</th><th className="p-2 text-right">Interest</th><th className="p-2 text-right">Remaining Balance</th></tr></thead><tbody>{amortizationData?.amortization.map(row => ( <tr key={row.month} className="border-b"><td className="p-2">{row.month}</td><td className="p-2 text-right">${row.payment.toFixed(2)}</td><td className="p-2 text-right">${row.principal.toFixed(2)}</td><td className="p-2 text-right">${row.interest.toFixed(2)}</td><td className="p-2 text-right">${row.balance.toFixed(2)}</td></tr>))}</tbody></table></div></div></div> );
-    const StrategyCard = ({ title, description, value, icon, selected }) => ( <div onClick={() => setStrategy(value)} className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}> <div className="flex justify-between items-center"> <div className="flex items-center"> {icon} <h4 className="font-bold ml-2">{title}</h4> </div> {selected && <CheckCircle2 className="text-blue-500" />} </div> <p className="text-sm text-gray-600 mt-1">{description}</p> </div> );
-    const dtiTooltipText = ( <div className="text-left space-y-2"> <p>Your Debt-to-Income (DTI) ratio is all your monthly debt payments divided by your gross monthly income. Lenders use it to measure your ability to manage payments.</p> <div> <p className="font-bold">General Guidelines:</p> <ul className="list-disc list-inside text-xs"> <li><span className="font-semibold text-green-400">36% or less:</span> Optimal</li> <li><span className="font-semibold text-yellow-400">37% to 42%:</span> Manageable</li> <li><span className="font-semibold text-orange-400">43% to 49%:</span> Cause for concern</li> <li><span className="font-semibold text-red-400">50% or more:</span> Dangerous</li> </ul> </div> </div> );
-
-    const InvestmentGrowthCalculator = ({ startingAmount: initialStartingAmount, isForPdf = false }) => {
-        const [startingAmount, setStartingAmount] = useState(initialStartingAmount);
-        const [monthlyContribution, setMonthlyContribution] = useState(500);
-        const [annualReturn, setAnnualReturn] = useState(7);
-        const [yearsToGrow, setYearsToGrow] = useState(20);
-
-        useEffect(() => {
-            setStartingAmount(initialStartingAmount);
-        }, [initialStartingAmount]);
-        
-        const projectionData = useMemo(() => {
-            const data = [];
-            let currentValue = startingAmount;
-            const monthlyReturnRate = (annualReturn / 100) / 12;
-
-            for (let year = 0; year <= yearsToGrow; year++) {
-                data.push({ year: `Year ${year}`, value: currentValue });
-                if (year < yearsToGrow) {
-                    for (let month = 1; month <= 12; month++) {
-                        currentValue = (currentValue + monthlyContribution) * (1 + monthlyReturnRate);
-                    }
-                }
-            }
-            return data;
-        }, [startingAmount, monthlyContribution, annualReturn, yearsToGrow]);
-
-        return (
-            <div id="investment-growth-projection" className="bg-white p-6 rounded-lg shadow-md mt-8">
-                <h3 className="text-xl font-bold mb-4">Investment Growth Projection</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div>
-                        <label className="text-sm font-medium text-gray-700">Starting Principal</label>
-                        <div className="relative mt-1">
-                             <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/>
-                             <input type="number" value={startingAmount} onChange={e => setStartingAmount(Number(e.target.value))} className="w-full pl-8 border-gray-300 rounded-md shadow-sm"/>
-                        </div>
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium text-gray-700">Monthly Contribution</label>
-                        <div className="relative mt-1">
-                             <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/>
-                             <input type="number" value={monthlyContribution} onChange={e => setMonthlyContribution(Number(e.target.value))} className="w-full pl-8 border-gray-300 rounded-md shadow-sm"/>
-                        </div>
-                    </div>
-                     <div>
-                        <label className="text-sm font-medium text-gray-700">Est. Annual Return (%)</label>
-                        <div className="relative mt-1">
-                             <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/>
-                             <input type="number" value={annualReturn} onChange={e => setAnnualReturn(Number(e.target.value))} className="w-full pl-8 border-gray-300 rounded-md shadow-sm"/>
-                        </div>
-                    </div>
-                     <div>
-                        <label className="text-sm font-medium text-gray-700">Years to Project</label>
-                        <div className="relative mt-1">
-                             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/>
-                             <input type="number" value={yearsToGrow} onChange={e => setYearsToGrow(Number(e.target.value))} className="w-full pl-8 border-gray-300 rounded-md shadow-sm"/>
-                        </div>
-                    </div>
-                </div>
-                <ResponsiveContainer width="100%" height={400}>
-                    <LineChart data={projectionData} isAnimationActive={!isForPdf}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="year" />
-                        <YAxis tickFormatter={(value) => `$${(value/1000).toLocaleString()}k`} />
-                        <RechartsTooltip formatter={(value) => `$${value.toLocaleString(undefined, {maximumFractionDigits: 0})}`} />
-                        <Legend />
-                        <Line type="monotone" dataKey="value" name="Projected Value" stroke="#14b8a6" strokeWidth={3} dot={false} />
-                    </LineChart>
-                </ResponsiveContainer>
-            </div>
-        );
-    };
-
-     const RetirementReadinessSimulator = ({ startingAmount }) => {
-        const [currentAge, setCurrentAge] = useState(30);
-        const [retirementAge, setRetirementAge] = useState(65);
-        const [targetAnnualIncome, setTargetAnnualIncome] = useState(80000);
-        const [monthlyContribution, setMonthlyContribution] = useState(500);
-        const [annualReturn, setAnnualReturn] = useState(7);
-
-        const { requiredNestEgg, projectedValue, shortfall, surplus } = useMemo(() => {
-            const yearsToGrow = retirementAge - currentAge;
-            if (yearsToGrow <= 0) return { requiredNestEgg: 0, projectedValue: startingAmount, shortfall: 0, surplus: 0};
-
-            const requiredNestEgg = targetAnnualIncome * 25; // 4% rule
-
-            let projectedValue = startingAmount;
-            const monthlyReturnRate = (annualReturn / 100) / 12;
-            const totalMonths = yearsToGrow * 12;
-
-            for (let month = 1; month <= totalMonths; month++) {
-                projectedValue = (projectedValue + monthlyContribution) * (1 + monthlyReturnRate);
-            }
-            
-            const difference = projectedValue - requiredNestEgg;
-            const shortfall = difference < 0 ? Math.abs(difference) : 0;
-            const surplus = difference > 0 ? difference : 0;
-
-            return { requiredNestEgg, projectedValue, shortfall, surplus };
-        }, [startingAmount, currentAge, retirementAge, targetAnnualIncome, monthlyContribution, annualReturn]);
-        
-        const simulatorTooltipText = (
-            <div className="text-left space-y-2">
-                <p>This tool estimates if you're on track for retirement based on your inputs.</p>
-                <p className="font-bold">Required Nest Egg:</p>
-                <p>Calculated using the 25x rule, which is your Target Annual Income multiplied by 25. This is based on the 4% safe withdrawal rate.</p>
-                <p className="font-bold">Projected Portfolio:</p>
-                <p>Forecasts the future value of your investments based on your current age, retirement age, contributions, and estimated return.</p>
-            </div>
-        );
-
-        return (
-            <div id="retirement-readiness-simulator" className="bg-white p-6 rounded-lg shadow-md mt-8">
-                <div className="flex items-center gap-2 mb-4">
-                    <h3 className="text-xl font-bold">Retirement Readiness Simulator</h3>
-                    <Tooltip text={simulatorTooltipText}>
-                        <Info size={16} className="text-gray-400 cursor-pointer" />
-                    </Tooltip>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-                    <div><label className="text-sm font-medium text-gray-700">Current Age</label><input type="number" value={currentAge} onChange={e => setCurrentAge(Number(e.target.value))} className="mt-1 w-full border-gray-300 rounded-md shadow-sm"/></div>
-                    <div><label className="text-sm font-medium text-gray-700">Retirement Age</label><input type="number" value={retirementAge} onChange={e => setRetirementAge(Number(e.target.value))} className="mt-1 w-full border-gray-300 rounded-md shadow-sm"/></div>
-                    <div><label className="text-sm font-medium text-gray-700">Target Annual Income</label><div className="relative mt-1"><DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/><input type="number" value={targetAnnualIncome} onChange={e => setTargetAnnualIncome(Number(e.target.value))} className="w-full pl-8 border-gray-300 rounded-md shadow-sm"/></div></div>
-                    <div><label className="text-sm font-medium text-gray-700">Monthly Contribution</label><div className="relative mt-1"><DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/><input type="number" value={monthlyContribution} onChange={e => setMonthlyContribution(Number(e.target.value))} className="w-full pl-8 border-gray-300 rounded-md shadow-sm"/></div></div>
-                    <div><label className="text-sm font-medium text-gray-700">Est. Annual Return (%)</label><div className="relative mt-1"><Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/><input type="number" value={annualReturn} onChange={e => setAnnualReturn(Number(e.target.value))} className="w-full pl-8 border-gray-300 rounded-md shadow-sm"/></div></div>
-                </div>
-                <div className="bg-gray-50 p-6 rounded-lg">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                        <div><p className="text-sm text-gray-500">Required Nest Egg</p><p className="text-2xl font-bold text-gray-800">${requiredNestEgg.toLocaleString(undefined, {maximumFractionDigits: 0})}</p></div>
-                        <div><p className="text-sm text-gray-500">Projected Portfolio</p><p className="text-2xl font-bold text-gray-800">${projectedValue.toLocaleString(undefined, {maximumFractionDigits: 0})}</p></div>
-                        <div>
-                            {surplus > 0 && <><p className="text-sm text-green-600">Projected Surplus</p><p className="text-2xl font-bold text-green-600">${surplus.toLocaleString(undefined, {maximumFractionDigits: 0})}</p></>}
-                            {shortfall > 0 && <><p className="text-sm text-red-600">Projected Shortfall</p><p className="text-2xl font-bold text-red-600">${shortfall.toLocaleString(undefined, {maximumFractionDigits: 0})}</p></>}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )
-    }
-    
-    const FinancialGoalSetting = ({ portfolioValue, goals, setGoals }) => {
-        const [goalName, setGoalName] = useState('');
-        const [targetAmount, setTargetAmount] = useState('');
-        const [targetDate, setTargetDate] = useState('');
-        const [showPlanner, setShowPlanner] = useState(null);
-    
-        const addGoal = () => {
-            if (goalName && targetAmount && targetDate) {
-                setGoals([...goals, { id: Date.now(), name: goalName, amount: Number(targetAmount), date: targetDate, plan: null }]);
-                setGoalName('');
-                setTargetAmount('');
-                setTargetDate('');
-            }
-        };
-
-        const removeGoal = (id) => {
-            setGoals(goals.filter(goal => goal.id !== id));
-        };
-
-        const createPlan = (id) => {
-            const goal = goals.find(g => g.id === id);
-            if (!goal) return;
-
-            const monthsRemaining = (new Date(goal.date) - new Date()) / (1000 * 60 * 60 * 24 * 30.44);
-            if (monthsRemaining <= 0) {
-                 goal.plan = { requiredMonthly: Infinity };
-                 setGoals([...goals]);
-                 return;
-            }
-
-            const annualReturn = 0.07; // Assuming 7%
-            const monthlyReturn = annualReturn / 12;
-            
-            // Future value of current portfolio portion (simplified for this example)
-            const currentAllocation = Math.min(portfolioValue, goal.amount);
-            const futureValueOfCurrent = currentAllocation * Math.pow(1 + monthlyReturn, monthsRemaining);
-            
-            const remainingAmount = goal.amount - futureValueOfCurrent;
-            
-            if (remainingAmount <= 0) {
-                goal.plan = { requiredMonthly: 0 };
-                setGoals([...goals]);
-                return;
-            }
-
-            const requiredMonthly = (remainingAmount * monthlyReturn) / (Math.pow(1 + monthlyReturn, monthsRemaining) - 1);
-            
-            goal.plan = { requiredMonthly };
-            setGoals([...goals]);
-            setShowPlanner(id);
-        };
-    
-        return (
-            <div className="bg-white p-6 rounded-lg shadow-md mt-8">
-                <h3 className="text-xl font-bold mb-4">Financial Goals</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg">
-                    <input type="text" value={goalName} onChange={e => setGoalName(e.target.value)} placeholder="Goal Name (e.g., House Down Payment)" className="border-gray-300 rounded-md shadow-sm"/>
-                    <input type="number" value={targetAmount} onChange={e => setTargetAmount(e.target.value)} placeholder="Target Amount" className="border-gray-300 rounded-md shadow-sm"/>
-                    <input type="date" value={targetDate} onChange={e => setTargetDate(e.target.value)} className="border-gray-300 rounded-md shadow-sm"/>
-                    <button onClick={addGoal} className="bg-teal-500 text-white font-bold rounded-md hover:bg-teal-600 flex items-center justify-center gap-2"><PlusCircle size={16}/> Add Goal</button>
-                </div>
-
-                <div className="space-y-4">
-                    {goals.map(goal => {
-                        const progress = Math.min((portfolioValue / goal.amount) * 100, 100);
-                        return (
-                            <div key={goal.id} className="p-4 border rounded-lg">
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        <h4 className="font-bold">{goal.name}</h4>
-                                        <p className="text-sm text-gray-600">${goal.amount.toLocaleString()} by {new Date(goal.date).toLocaleDateString()}</p>
-                                    </div>
-                                    <button onClick={() => removeGoal(goal.id)} className="text-red-500 hover:text-red-700"><Trash size={16}/></button>
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                                    <div className="bg-teal-600 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
-                                </div>
-                                <div className="text-right text-xs mt-1">{progress.toFixed(0)}% Funded</div>
-
-                                <button onClick={() => createPlan(goal.id)} className="text-sm font-semibold text-teal-600 hover:underline mt-2">Create Plan</button>
-                                
-                                {showPlanner === goal.id && goal.plan && (
-                                    <div className="mt-2 p-3 bg-teal-50 rounded-lg text-center">
-                                        {goal.plan.requiredMonthly === Infinity ? (
-                                            <p className="text-red-600 font-semibold">This goal's date is in the past.</p>
-                                        ) : goal.plan.requiredMonthly <= 0 ? (
-                                            <p className="text-green-600 font-semibold">Congratulations! You are on track to meet this goal without additional contributions.</p>
-                                        ) : (
-                                            <p className="text-teal-800">To reach this goal, you need to contribute <span className="font-bold">${goal.plan.requiredMonthly.toLocaleString(undefined, {maximumFractionDigits: 0})}</span> per month.</p>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        )
-                    })}
-                </div>
-            </div>
-        );
-    };
-
-    const RiskToleranceQuiz = ({ onQuizComplete }) => {
-        const questions = [
-            {
-                question: "When you think about investing, what is your primary goal?",
-                options: [
-                    { text: "Preserving my capital is most important.", value: 1 },
-                    { text: "A mix of growth and capital preservation.", value: 2 },
-                    { text: "Maximizing long-term growth, even with some risk.", value: 3 }
-                ]
-            },
-            {
-                question: "How would you react to a 20% drop in your portfolio's value in a single year?",
-                options: [
-                    { text: "Panic and sell everything.", value: 1 },
-                    { text: "Feel concerned, but wait it out.", value: 2 },
-                    { text: "See it as a buying opportunity.", value: 3 }
-                ]
-            },
-            {
-                question: "What is your investment time horizon?",
-                options: [
-                    { text: "Short-term (less than 3 years)", value: 1 },
-                    { text: "Medium-term (3-10 years)", value: 2 },
-                    { text: "Long-term (more than 10 years)", value: 3 }
-                ]
-            },
-            {
-                question: "How much of your portfolio are you comfortable allocating to higher-risk assets like stocks?",
-                options: [
-                    { text: "Less than 25%", value: 1 },
-                    { text: "25% to 75%", value: 2 },
-                    { text: "More than 75%", value: 3 }
-                ]
-            },
-            {
-                question: "How would you describe your knowledge of investments?",
-                options: [
-                    { text: "Beginner", value: 1 },
-                    { text: "Intermediate", value: 2 },
-                    { text: "Advanced", value: 3 }
-                ]
-            }
-        ];
-
-        const [currentQuestion, setCurrentQuestion] = useState(0);
-        const [answers, setAnswers] = useState({});
-        const [showResult, setShowResult] = useState(false);
-
-        const handleAnswer = (questionIndex, value) => {
-            setAnswers({ ...answers, [questionIndex]: value });
-        };
-
-        const calculateResult = () => {
-            const totalScore = Object.values(answers).reduce((sum, value) => sum + value, 0);
-            let profile;
-            if (totalScore <= 6) {
-                profile = { name: "Conservative", description: "Prefers safety and capital preservation over high returns.", icon: Shield, color: "bg-blue-500" };
-            } else if (totalScore <= 11) {
-                profile = { name: "Moderate", description: "Seeks a balance between growth and risk, comfortable with some fluctuations.", icon: BarChart2, color: "bg-yellow-500" };
-            } else {
-                profile = { name: "Aggressive", description: "Focuses on maximizing long-term returns and is comfortable with significant market volatility.", icon: Activity, color: "bg-red-500" };
-            }
-            onQuizComplete(profile);
-            setShowResult(true);
-        };
-
-        const nextQuestion = () => {
-            if (currentQuestion < questions.length - 1) {
-                setCurrentQuestion(currentQuestion + 1);
-            } else {
-                calculateResult();
-            }
-        };
-
-        return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-                <div className="bg-white rounded-lg shadow-2xl p-8 max-w-lg w-full relative">
-                    {!showResult ? (
-                        <>
-                            <button onClick={() => onQuizComplete(null, true)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"><X /></button>
-                            <h3 className="text-xl font-bold mb-2">Question {currentQuestion + 1}/{questions.length}</h3>
-                            <p className="text-lg text-gray-700 mb-6">{questions[currentQuestion].question}</p>
-                            <div className="space-y-3">
-                                {questions[currentQuestion].options.map((option, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => handleAnswer(currentQuestion, option.value)}
-                                        className={`w-full text-left p-4 rounded-lg border-2 transition-all ${answers[currentQuestion] === option.value ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'}`}
-                                    >
-                                        {option.text}
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="flex justify-end mt-6">
-                                <button
-                                    onClick={nextQuestion}
-                                    disabled={answers[currentQuestion] === undefined}
-                                    className="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                >
-                                    {currentQuestion < questions.length - 1 ? "Next" : "Finish"}
-                                </button>
-                            </div>
-                        </>
-                    ) : (
-                         <div className="text-center">
-                             <h2 className="text-2xl font-bold text-gray-800 mb-2">Quiz Complete!</h2>
-                             <button onClick={() => onQuizComplete(null, true)} className="mt-6 bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700">Done</button>
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
-    };
-
-    const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, setGoals, generateInvestmentPDF, investmentPdfLoading, pdfLibrariesLoaded, totalValue, simplifiedAllocation }) => {
-        const [showQuiz, setShowQuiz] = useState(false);
-
-        const targetAllocations = {
-            Conservative: [{ name: 'Growth', value: 25 }, { name: 'Balanced', value: 40 }, { name: 'Conservative', value: 35 }],
-            Moderate: [{ name: 'Growth', value: 60 }, { name: 'Balanced', value: 30 }, { name: 'Conservative', value: 10 }],
-            Aggressive: [{ name: 'Growth', value: 85 }, { name: 'Balanced', value: 10 }, { name: 'Conservative', value: 5 }],
-        };
-
-        const handleQuizComplete = (profile, close = false) => {
-            if (profile) setRiskProfile(profile);
-            if (close) setShowQuiz(false);
-        };
-
-        const RebalancingSuggestions = () => {
-            if (!riskProfile || totalValue <= 0) return null;
-        
-            const currentAllocationMap = new Map(simplifiedAllocation.map(item => [item.name, (item.value / totalValue) * 100]));
-            const targetAllocationMap = new Map(targetAllocations[riskProfile.name].map(item => [item.name, item.value]));
-            
-            const categories = ['Growth', 'Balanced', 'Conservative'];
-            const allocationDiffs = categories.map(name => {
-                const currentPercent = currentAllocationMap.get(name) || 0;
-                const targetPercent = targetAllocationMap.get(name) || 0;
-                return {
-                    name,
-                    diff: currentPercent - targetPercent,
-                    currentValue: (currentPercent / 100) * totalValue,
-                    targetValue: (targetPercent / 100) * totalValue
-                };
-            });
-        
-            const needsRebalancing = allocationDiffs.some(d => Math.abs(d.diff) > 5);
-        
-            if (!needsRebalancing) {
-                return (
-                     <div className="mt-6 p-4 rounded-lg flex items-start gap-4 bg-green-100 text-green-800">
-                        <CheckCircle2 className="h-6 w-6 mt-1 flex-shrink-0" />
-                        <p className="text-sm">Your portfolio's allocation is well-aligned with your risk profile. No rebalancing needed at this time.</p>
-                    </div>
-                );
-            }
-            
-            const toSell = allocationDiffs.filter(d => d.diff > 5);
-            const toBuy = allocationDiffs.filter(d => d.diff < -5);
-
-            const rebalancingTooltip = (
-                <div className="text-left space-y-2">
-                    <p><strong className="text-green-400">Growth:</strong> Higher potential returns, higher risk. <br/><em>E.g., Individual Stocks, Crypto, Growth ETFs.</em></p>
-                    <p><strong className="text-yellow-400">Balanced:</strong> A mix of growth and stability. <br/><em>E.g., Index Funds (S&P 500), Mutual Funds, REITs.</em></p>
-                    <p><strong className="text-blue-400">Conservative:</strong> Lower risk, focus on capital preservation. <br/><em>E.g., Bonds, Cash, CDs, Money Market.</em></p>
-                </div>
-            );
-        
-            return (
-                <div className="mt-4 p-4 border-2 border-orange-300 bg-orange-50 rounded-lg">
-                    <div className="flex items-start gap-3">
-                        <GitCommit className="h-6 w-6 text-orange-600 flex-shrink-0" />
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h4 className="font-bold text-orange-800">Rebalancing Actions Suggested</h4>
-                                <Tooltip text={rebalancingTooltip}>
-                                    <Info size={16} className="text-gray-400 cursor-pointer" />
-                                </Tooltip>
-                            </div>
-                            <p className="text-sm text-orange-700 mt-1">Your portfolio has drifted from its target. Consider the following actions to realign with your '{riskProfile.name}' profile:</p>
-                        </div>
-                    </div>
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        {toSell.length > 0 && (
-                            <div>
-                                <p className="font-semibold mb-2 text-red-600">Consider Selling:</p>
-                                <ul className="space-y-1">
-                                    {toSell.map(item => (
-                                        <li key={item.name}>
-                                            ~${(item.currentValue - item.targetValue).toLocaleString(undefined, {maximumFractionDigits:0})} of <span className="font-medium">{item.name}</span> assets.
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                        {toBuy.length > 0 && (
-                            <div>
-                                <p className="font-semibold mb-2 text-green-600">Consider Buying:</p>
-                                 <ul className="space-y-1">
-                                    {toBuy.map(item => (
-                                        <li key={item.name}>
-                                            ~${(item.targetValue - item.currentValue).toLocaleString(undefined, {maximumFractionDigits:0})} of <span className="font-medium">{item.name}</span> assets.
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        };
-
-        if (data.length === 0) {
-            return (
-                <div className="text-center p-10 bg-white rounded-lg shadow-md">
-                    <h2 className="text-2xl font-bold text-gray-800">Investment Portfolio</h2>
-                    <p className="text-gray-500 mt-2">No investment data found. Please add a link to your 'Investments' sheet to see your portfolio.</p>
-                </div>
-            )
-        }
-
-        return (
-            <>
-                {showQuiz && <RiskToleranceQuiz onQuizComplete={handleQuizComplete} />}
-                <div className="flex flex-col md:flex-row justify-between md:items-center mb-4">
-                    <h2 className="text-2xl font-bold text-gray-800">Investment Portfolio</h2>
-                    <button
-                        onClick={generateInvestmentPDF}
-                        disabled={!pdfLibrariesLoaded || investmentPdfLoading}
-                        className="mt-4 md:mt-0 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                        {investmentPdfLoading ? <Loader className="animate-spin h-4 w-4" /> : <Download size={16}/>}
-                        {investmentPdfLoading ? 'Generating...' : 'Download Report'}
-                    </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    <StatCard icon={<Landmark className="h-6 w-6 text-white"/>} title="Total Portfolio Value" value={`$${totalValue.toLocaleString(undefined, {maximumFractionDigits: 2})}`} color="bg-teal-500" />
-                    {riskProfile ? (
-                        <StatCard 
-                            icon={React.createElement(riskProfile.icon, {className: "h-6 w-6 text-white"})}
-                            title="Your Risk Profile"
-                            value={riskProfile.name}
-                            color={riskProfile.color}
-                            description={riskProfile.description}
-                        />
-                    ) : (
-                        <div className="bg-white p-4 rounded-lg shadow-md flex items-center justify-center text-center">
-                            <div>
-                                <p className="font-bold">Discover Your Investor Type</p>
-                                <button onClick={() => setShowQuiz(true)} className="mt-2 bg-teal-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-600 text-sm">Take Risk Quiz</button>
-                            </div>
-                        </div>
-                    )}
-                    <div className="bg-white p-4 rounded-lg shadow-md flex items-center justify-center text-center">
-                        <div>
-                            <h4 className="font-bold">Strategy Tools</h4>
-                            <p className="text-sm text-gray-600 mb-2">Refine your investment approach.</p>
-                            <button onClick={() => setShowQuiz(true)} className="bg-teal-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-600 text-sm">
-                                {riskProfile ? 'Retake Risk Quiz' : 'Take Risk Quiz'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {riskProfile && (
-                    <div id="allocation-comparison-section" className="bg-white p-6 rounded-lg shadow-md mb-8">
-                        <h3 className="text-xl font-bold mb-4">Allocation Comparison</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                            <div className="text-center">
-                                <h4 className="font-semibold mb-2">Your Current Allocation</h4>
-                                <ResponsiveContainer width="100%" height={250}>
-                                    <PieChart>
-                                        <Pie data={simplifiedAllocation} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} isAnimationActive={false}>
-                                            {simplifiedAllocation.map((entry) => (<Cell key={entry.name} fill={ALLOCATION_COLORS[entry.name]} />))}
-                                        </Pie>
-                                        <RechartsTooltip formatter={(value) => `$${value.toLocaleString()}`} />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div className="text-center">
-                                <h4 className="font-semibold mb-2">Target for '{riskProfile.name}' Profile</h4>
-                                <ResponsiveContainer width="100%" height={250}>
-                                    <PieChart>
-                                        <Pie data={targetAllocations[riskProfile.name]} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, value }) => `${name} ${value}%`} isAnimationActive={false}>
-                                            {targetAllocations[riskProfile.name].map((entry) => (<Cell key={entry.name} fill={ALLOCATION_COLORS[entry.name]} />))}
-                                        </Pie>
-                                        <RechartsTooltip formatter={(value) => `${value}%`} />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                        <RebalancingSuggestions />
-                    </div>
-                )}
-
-                <div className="bg-white p-6 rounded-lg shadow-md mt-8">
-                    <h3 className="text-xl font-bold mb-4">Investment Details</h3>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm"><thead className="bg-gray-100 text-xs text-gray-700 uppercase"><tr><th className="p-3">Investment Name</th><th className="p-3">Type</th><th className="p-3 text-right">Value</th></tr></thead><tbody>{data.map((item, index) => ( <tr key={index} className="border-b hover:bg-gray-50"><td className="p-3 font-medium">{item['Investment Name']}</td><td className="p-3">{item.Type}</td><td className="p-3 text-right">${(item.Value || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>))}</tbody></table>
-                    </div>
-                </div>
-                <FinancialGoalSetting portfolioValue={totalValue} goals={goals} setGoals={setGoals} />
-                <InvestmentGrowthCalculator startingAmount={totalValue} isForPdf={investmentPdfLoading} />
-                <RetirementReadinessSimulator startingAmount={totalValue} />
-            </>
-        )
-    }
-
-    const Footer = () => (
-        <footer className="mt-12 text-center text-gray-500 text-xs">
-            <p>&copy; {new Date().getFullYear()} www.smartstepstowealth.com. All Rights Reserved.</p>
-            <p className="mt-2 max-w-2xl mx-auto">
-                Disclaimer: This tool is for informational and illustrative purposes only and does not constitute financial, legal, or tax advice. The projections and information provided are based on the data you input and certain assumptions, and are not a guarantee of future results. Please consult with a qualified professional before making any financial decisions.
-            </p>
-        </footer>
-    );
-
     return (
         <div className="bg-slate-50 min-h-screen font-sans text-gray-800">
-            {showImpactModal && impactData && <ImpactModal />}
-            {showAmortizationModal && amortizationData && <AmortizationModal />}
+            {showImpactModal && <ImpactModal impactData={impactData} setShowImpactModal={setShowImpactModal} />}
+            {showAmortizationModal && <AmortizationModal amortizationData={amortizationData} setShowAmortizationModal={setShowAmortizationModal} />}
             <div className="container mx-auto p-4 sm:p-6 lg:p-8">
                 <header className="text-center mb-8">
                     <h1 className="text-5xl font-extrabold text-gray-800">
@@ -1442,8 +1443,8 @@ const App = () => {
                                         </Tooltip>
                                     </div>
                                     <div className="space-y-3">
-                                        <StrategyCard title="Debt Snowball" description="Pay off smallest debts first for quick wins." value="snowball" icon={<Zap className="text-yellow-500" />} selected={strategy === 'snowball'} />
-                                        <StrategyCard title="Debt Avalanche" description="Pay off highest interest debts first to save money." value="avalanche" icon={<TrendingDown className="text-red-500" />} selected={strategy === 'avalanche'} />
+                                        <StrategyCard title="Debt Snowball" description="Pay off smallest debts first for quick wins." value="snowball" icon={<Zap className="text-yellow-500" />} selected={strategy === 'snowball'} setStrategy={setStrategy} />
+                                        <StrategyCard title="Debt Avalanche" description="Pay off highest interest debts first to save money." value="avalanche" icon={<TrendingDown className="text-red-500" />} selected={strategy === 'avalanche'} setStrategy={setStrategy} />
                                     </div>
                                 </div>
                                 <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-4 rounded-lg">
