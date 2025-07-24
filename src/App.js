@@ -625,7 +625,7 @@ const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, set
                 <StatCard icon={<Landmark className="h-6 w-6 text-white"/>} title="Total Portfolio Value" value={`$${totalValue.toLocaleString(undefined, {maximumFractionDigits: 2})}`} color="bg-teal-500" />
                 {riskProfile ? (
                     <StatCard 
-                        icon={React.createElement(riskProfile.icon, {className: "h-6 w-6 text-white"})}
+                        icon={typeof riskProfile.icon === 'function' ? React.createElement(riskProfile.icon, {className: "h-6 w-6 text-white"}) : null}
                         title="Your Risk Profile"
                         value={riskProfile.name}
                         color={riskProfile.color}
