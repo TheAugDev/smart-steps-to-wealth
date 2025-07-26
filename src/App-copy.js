@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { Sheet, DollarSign, Percent, Info, TrendingUp, AlertCircle, Loader, ExternalLink, PieChart as PieChartIcon, ChevronsRight, Award, X, Calendar, Repeat, Download, FileText, RefreshCw, ClipboardList, CheckCircle2, Zap, TrendingDown, Eye, Trash2, Briefcase, Edit, Landmark, Target, PlusCircle, Trash, Shield, BarChart2, Activity, AlertTriangle, GitCommit, Link } from 'lucide-react';
+import { Sheet, DollarSign, Percent, Info, TrendingUp, AlertCircle, Loader, ExternalLink, PieChart as PieChartIcon, ChevronsRight, Award, X, Calendar, Repeat, Download, FileText, RefreshCw, ClipboardList, CheckCircle2, Zap, TrendingDown, Eye, Trash2, Briefcase, Edit, Landmark, Target, PlusCircle, Trash, Shield, BarChart2, Activity, AlertTriangle, GitCommit } from 'lucide-react';
 
-// --- Helper to parse CSV data ---
+// Helper to parse CSV data
 const parseCSV = (csvText) => {
     const lines = csvText.split('\n');
     if (lines.length < 2) return [];
@@ -32,7 +32,7 @@ const parseCSV = (csvText) => {
     return data;
 };
 
-// --- Colors for Charts ---
+// Colors for the pie charts
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#ff4d4d', '#4BC0C0', '#9966FF', '#FF6384', '#36A2EB'];
 const ALLOCATION_COLORS = { 'Growth': '#22c55e', 'Balanced': '#facc15', 'Conservative': '#3b82f6' };
 
@@ -138,7 +138,7 @@ const Tooltip = ({ text, children }) => {
 
 // --- Child Components defined outside App for stability ---
 
-const Instructions = () => ( <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md mb-6 shadow-sm"> <h3 className="text-lg font-semibold flex items-center"><Info className="h-6 w-6 mr-3" />How to use this tool</h3> <div className="text-sm space-y-2 mt-2"> <p>This tool visualizes your financial data from Google Sheets. To get started:</p> <p>1. <strong>Use the Template:</strong> Start by making a copy of the official <a href="https://docs.google.com/spreadsheets/d/1hD7oQM8cgB9EBhs1wHuBgaSFOwLH1a_TGg4jU84vfFw/edit?usp=sharing" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-semibold">Template Sheet <ExternalLink className="h-3 w-3 ml-1 inline"/></a>. It has the required tabs.</p> <p>2. <strong>Get Your Link:</strong> Inside your copied sheet, find the new menu item: <code className="bg-blue-100 text-blue-800 px-1 rounded">Smart Steps Menu</code> &rarr; <code className="bg-blue-100 text-blue-800 px-1 rounded">Get Web App Link</code>. The first time you click this, you will need to authorize the script.</p> <p>3. <strong>Paste Your Link Above:</strong> Copy the single link provided in the dialog box and paste it into the input field above.</p></div></div> );
+const Instructions = () => ( <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md mb-6 shadow-sm"> <h3 className="text-lg font-semibold flex items-center"><Info className="h-6 w-6 mr-3" />How to use this tool</h3> <div className="text-sm space-y-2 mt-2"> <p>This tool visualizes your financial data from Google Sheets. To get started:</p> <p>1. <strong>Use the Template:</strong> Start by making a copy of the official <a href="https://docs.google.com/spreadsheets/d/1hD7oQM8cgB9EBhs1wHuBgaSFOwLH1a_TGg4jU84vfFw/edit?usp=sharing" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-semibold">Template Sheet <ExternalLink className="h-3 w-3 ml-1 inline"/></a>. It has the required tabs.</p> <p>2. <strong>Publish Each Tab:</strong> For each tab you want to use ('Debts', 'Bills', 'Income', 'Investments'), you must publish it to the web. Click on the tab, then go to <code className="bg-blue-100 text-blue-800 px-1 rounded">File</code> &rarr; <code className="bg-blue-100 text-blue-800 px-1 rounded">Share</code> &rarr; <code className="bg-blue-100 text-blue-800 px-1 rounded">Publish to web</code>. In the dialog, select the specific sheet, choose 'Comma-separated values (.csv)', and click Publish. Copy the unique generated link for that tab.</p> <p>3. <strong>Paste Links Above:</strong> Paste each link into its corresponding input field above these instructions.</p></div></div> );
 const StatCard = ({ icon, title, value, baseValue, color, tooltipText, description }) => ( <div className="bg-white p-4 rounded-lg shadow-md transition-transform hover:scale-105 hover:-translate-y-1"> <div className="flex items-center"> <div className={`p-3 rounded-full mr-4 ${color}`}>{icon}</div> <div> <div className="flex items-center"> <p className="text-sm text-gray-500">{title}</p> {tooltipText && ( <Tooltip text={tooltipText}> <Info size={14} className="ml-1.5 text-gray-400 hover:text-gray-600 cursor-pointer" /> </Tooltip> )} </div> <p className="text-2xl font-bold text-gray-800">{value}</p> </div> </div> {baseValue && value !== baseValue && ( <div className="mt-2 text-sm text-center"> <span className="text-gray-500 line-through">{baseValue}</span> <ChevronsRight className="inline h-4 w-4 mx-1 text-green-500" /> <span className="font-bold text-green-600">{value}</span> </div> )} {description && <p className="text-xs text-gray-500 mt-2">{description}</p>}</div> );
 const ImpactModal = ({ impactData, setShowImpactModal }) => ( <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"> <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full text-center relative"> <button onClick={() => setShowImpactModal(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"><X /></button> <Award className="h-16 w-16 text-yellow-400 mx-auto mb-4" /> <h2 className="text-2xl font-bold text-gray-800 mb-2">Amazing!</h2> <p className="text-lg text-gray-600">That <span className="font-bold text-green-600">${impactData.amount.toLocaleString()}</span> payment made a huge difference!</p> <div className="mt-6 space-y-3"> <div className="bg-green-50 p-3 rounded-lg"> <p className="text-sm text-green-800">You'll be debt-free</p> <p className="text-xl font-bold text-green-600">{impactData.monthsSaved} months sooner!</p> </div> <div className="bg-blue-50 p-3 rounded-lg"> <p className="text-sm text-blue-800">You'll save an extra</p> <p className="text-xl font-bold text-blue-600">${impactData.interestSaved.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} in interest!</p> </div> </div> </div> </div> );
 const AmortizationModal = ({ amortizationData, setShowAmortizationModal }) => ( <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"> <div className="bg-white rounded-lg shadow-2xl p-6 max-w-2xl w-full text-center relative"> <button onClick={() => setShowAmortizationModal(false)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><X /></button> <h2 className="text-2xl font-bold text-gray-800 mb-4">Amortization Schedule for {amortizationData?.id}</h2> <div className="overflow-y-auto h-96"><table className="w-full text-sm text-left"><thead className="bg-gray-100 text-xs text-gray-700 uppercase sticky top-0"><tr><th className="p-2">Month</th><th className="p-2 text-right">Payment</th><th className="p-2 text-right">Principal</th><th className="p-2 text-right">Interest</th><th className="p-2 text-right">Remaining Balance</th></tr></thead><tbody>{amortizationData?.amortization.map(row => ( <tr key={row.month} className="border-b"><td className="p-2">{row.month}</td><td className="p-2 text-right">${row.payment.toFixed(2)}</td><td className="p-2 text-right">${row.principal.toFixed(2)}</td><td className="p-2 text-right">${row.interest.toFixed(2)}</td><td className="p-2 text-right">${row.balance.toFixed(2)}</td></tr>))}</tbody></table></div></div></div> );
@@ -625,7 +625,7 @@ const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, set
                 <StatCard icon={<Landmark className="h-6 w-6 text-white"/>} title="Total Portfolio Value" value={`$${totalValue.toLocaleString(undefined, {maximumFractionDigits: 2})}`} color="bg-teal-500" />
                 {riskProfile ? (
                     <StatCard 
-                        icon={React.createElement(riskProfile.icon, {className: "h-6 w-6 text-white"})}
+                        icon={typeof riskProfile.icon === 'function' ? React.createElement(riskProfile.icon, {className: "h-6 w-6 text-white"}) : null}
                         title="Your Risk Profile"
                         value={riskProfile.name}
                         color={riskProfile.color}
@@ -658,11 +658,10 @@ const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, set
                             <h4 className="font-semibold mb-2">Your Current Allocation</h4>
                             <ResponsiveContainer width="100%" height={250}>
                                 <PieChart>
-                                    <Pie data={simplifiedAllocation} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`} isAnimationActive={false}>
+                                    <Pie data={simplifiedAllocation} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} isAnimationActive={false}>
                                         {simplifiedAllocation.map((entry) => (<Cell key={entry.name} fill={ALLOCATION_COLORS[entry.name]} />))}
                                     </Pie>
                                     <RechartsTooltip formatter={(value) => `$${value.toLocaleString()}`} />
-                                    <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ right: -10 }} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -670,11 +669,10 @@ const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, set
                             <h4 className="font-semibold mb-2">Target for '{riskProfile.name}' Profile</h4>
                             <ResponsiveContainer width="100%" height={250}>
                                 <PieChart>
-                                    <Pie data={targetAllocations[riskProfile.name]} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, value }) => `${value}%`} isAnimationActive={false}>
+                                    <Pie data={targetAllocations[riskProfile.name]} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, value }) => `${name} ${value}%`} isAnimationActive={false}>
                                         {targetAllocations[riskProfile.name].map((entry) => (<Cell key={entry.name} fill={ALLOCATION_COLORS[entry.name]} />))}
                                     </Pie>
                                     <RechartsTooltip formatter={(value) => `${value}%`} />
-                                    <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ right: -10 }} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -706,7 +704,10 @@ const Footer = () => (
 );
 
 const App = () => {
-    const [smartStepsUrl, setSmartStepsUrl] = useState('');
+    const [debtSheetUrl, setDebtSheetUrl] = useState('');
+    const [billSheetUrl, setBillSheetUrl] = useState('');
+    const [incomeSheetUrl, setIncomeSheetUrl] = useState('');
+    const [investmentSheetUrl, setInvestmentSheetUrl] = useState('');
     const [debtData, setDebtData] = useState([]);
     const [billData, setBillData] = useState([]);
     const [incomeData, setIncomeData] = useState([]);
@@ -739,22 +740,28 @@ const App = () => {
     // --- Local Storage & Auto-loading ---
     useEffect(() => {
         // Load all saved data from localStorage on initial mount
-        const savedUrl = localStorage.getItem('smartStepsUrl');
+        const savedDebtUrl = localStorage.getItem('debtSheetUrl');
+        const savedBillUrl = localStorage.getItem('billSheetUrl');
+        const savedIncomeUrl = localStorage.getItem('incomeSheetUrl');
+        const savedInvestmentUrl = localStorage.getItem('investmentSheetUrl');
         const savedRiskProfile = localStorage.getItem('riskProfile');
         const savedGoals = localStorage.getItem('financialGoals');
         const savedExtraPayment = localStorage.getItem('extraMonthlyPayment');
         const savedSnowflakes = localStorage.getItem('snowflakePayments');
         const savedTargetDebt = localStorage.getItem('targetDebt');
 
-        if (savedUrl) setSmartStepsUrl(savedUrl);
+        if (savedDebtUrl) setDebtSheetUrl(savedDebtUrl);
+        if (savedBillUrl) setBillSheetUrl(savedBillUrl);
+        if (savedIncomeUrl) setIncomeSheetUrl(savedIncomeUrl);
+        if (savedInvestmentUrl) setInvestmentSheetUrl(savedInvestmentUrl);
         if (savedRiskProfile) setRiskProfile(JSON.parse(savedRiskProfile));
         if (savedGoals) setGoals(JSON.parse(savedGoals));
         if (savedExtraPayment) setExtraMonthlyPayment(savedExtraPayment);
         if (savedSnowflakes) setSnowflakePayments(JSON.parse(savedSnowflakes));
         if (savedTargetDebt) setTargetDebt(savedTargetDebt);
 
-        if (savedUrl) {
-            setTimeout(() => processSheetData(savedUrl), 0);
+        if (savedDebtUrl || savedBillUrl || savedIncomeUrl || savedInvestmentUrl) {
+            setTimeout(() => processSheetData(savedDebtUrl, savedBillUrl, savedIncomeUrl, savedInvestmentUrl), 0);
         }
     }, []); // Runs only once on initial component mount
 
@@ -765,66 +772,98 @@ const App = () => {
     useEffect(() => { localStorage.setItem('snowflakePayments', JSON.stringify(snowflakePayments)); }, [snowflakePayments]);
     useEffect(() => { localStorage.setItem('targetDebt', targetDebt); }, [targetDebt]);
 
-    const processSheetData = async (url = smartStepsUrl) => {
-        if (!url) {
-            setError("Please provide your Smart Steps Web App Link.");
+    const processSheetData = async (debtUrl = debtSheetUrl, billUrl = billSheetUrl, incomeUrl = incomeSheetUrl, investmentUrl = investmentSheetUrl) => {
+        if (!debtUrl && !billUrl && !incomeUrl && !investmentUrl) {
+            setError("Please provide at least one sheet link to load data.");
             return;
         }
         setLoading(true); setError(null); setDebtData([]); setBillData([]); setIncomeData([]); setInvestmentData([]);
 
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch data. Status: ${response.status}. Please ensure your link is correct and the script is deployed for 'Anyone'.`);
+        const fetchData = async (url) => {
+            if (!url) return null;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch data from ${url}. Status: ${response.status}`);
+                }
+                const csvText = await response.text();
+                if (csvText.toLowerCase().includes('<html')) {
+                     throw new Error(`The link for ${url.substring(0,30)}... seems to be a webpage, not a published CSV link. Please check the 'Publish to web' settings.`);
+                }
+                return parseCSV(csvText);
+            } catch (e) {
+                throw new Error(`Network error or invalid link provided. ${e.message}`);
             }
-            const data = await response.json();
-
-            if (data.error) {
-                throw new Error(`Error from Google Script: ${data.error}`);
+        };
+        
+        const normalizeAndValidate = (data, requiredCols, sheetName) => {
+            if (!data || data.length === 0) return [];
+            const firstRow = data[0];
+            const headerMap = {};
+            Object.keys(firstRow).map(h => h.trim().toLowerCase());
+            for (const reqCol of requiredCols) {
+                const foundHeader = Object.keys(firstRow).find(h => h.trim().toLowerCase() === reqCol.toLowerCase());
+                if (!foundHeader) {
+                    throw new Error(`Your '${sheetName}' sheet is missing or has a misspelled required column. It needs: [${requiredCols.join(', ')}].`);
+                }
+                headerMap[reqCol] = foundHeader;
             }
-
-            // --- Normalize and Validate Data ---
-            const normalize = (arr, requiredCols) => {
-                if (!Array.isArray(arr)) return [];
-                return arr.map(row => {
-                    const normalizedRow = {};
-                    for (const col of requiredCols) {
-                        const foundKey = Object.keys(row).find(k => k.trim().toLowerCase() === col.toLowerCase());
-                        let value = foundKey ? row[foundKey] : undefined;
-
-                        // Smart number conversion
-                        if (['balance', 'apr', 'minimum payment', 'amount', 'value'].includes(col.toLowerCase())) {
-                            if (typeof value === 'string') {
-                                const numericValue = value.replace(/[^0-9.-]+/g,"");
-                                value = isNaN(Number(numericValue)) || numericValue === '' ? 0 : Number(numericValue);
-                            } else if (typeof value !== 'number') {
-                                value = 0;
-                            }
-                        }
-                        normalizedRow[col] = value;
+            return data.map(row => {
+                const normalizedRow = {};
+                for (const reqCol of requiredCols) {
+                    normalizedRow[reqCol] = row[headerMap[reqCol]];
+                }
+                for(const originalHeader in row){
+                    if(!Object.values(headerMap).includes(originalHeader)){
+                        normalizedRow[originalHeader] = row[originalHeader];
                     }
-                    return normalizedRow;
-                });
-            };
+                }
+                return normalizedRow;
+            });
+        };
 
-            const debtCols = ['Debt Name', 'Balance', 'APR', 'minimum payment', 'Debt type'];
-            setDebtData(normalize(data.debts, debtCols).filter(d => d['Debt Name'] && typeof d['Balance'] === 'number'));
+        try {
+            const [fetchedDebtData, fetchedBillData, fetchedIncomeData, fetchedInvestmentData] = await Promise.all([
+                fetchData(debtUrl),
+                fetchData(billUrl),
+                fetchData(incomeUrl),
+                fetchData(investmentUrl)
+            ]);
 
-            const billCols = ['Bill Name', 'Amount', 'Category'];
-            setBillData(normalize(data.bills, billCols).filter(b => b['Bill Name'] && typeof b['Amount'] === 'number'));
+            if (fetchedDebtData) {
+                const debtCols = ['Debt Name', 'Balance', 'APR', 'minimum payment', 'Debt type'];
+                const normalizedDebts = normalizeAndValidate(fetchedDebtData, debtCols, 'Debts');
+                setDebtData(normalizedDebts.filter(d => d['Debt Name'] && typeof d['Balance'] === 'number'));
+            }
+            if (debtUrl) localStorage.setItem('debtSheetUrl', debtUrl);
+            if (billUrl) localStorage.setItem('billSheetUrl', billUrl);
+            if (incomeUrl) localStorage.setItem('incomeSheetUrl', incomeUrl);
+            if (investmentUrl) localStorage.setItem('investmentSheetUrl', investmentUrl);
 
-            const incomeCols = ['Income Source', 'Amount', 'Frequency'];
-            setIncomeData(normalize(data.income, incomeCols).filter(i => i['Income Source'] && typeof i['Amount'] === 'number'));
+            if (fetchedBillData && fetchedBillData.length > 0) {
+                const billCols = ['Bill Name', 'Amount', 'Category'];
+                const normalizedBills = normalizeAndValidate(fetchedBillData, billCols, 'Bills');
+                setBillData(normalizedBills.filter(b => b['Bill Name'] && typeof b['Amount'] === 'number'));
+            }
+
+            if (fetchedIncomeData && fetchedIncomeData.length > 0) {
+                const incomeCols = ['Income Source', 'Amount', 'Frequency'];
+                const normalizedIncome = normalizeAndValidate(fetchedIncomeData, incomeCols, 'Income');
+                setIncomeData(normalizedIncome.filter(i => i['Income Source'] && typeof i['Amount'] === 'number'));
+            }
+
+            if (fetchedInvestmentData && fetchedInvestmentData.length > 0) {
+                const investmentCols = ['Investment Name', 'Value', 'Type'];
+                const normalizedInvestments = normalizeAndValidate(fetchedInvestmentData, investmentCols, 'Investments');
+                setInvestmentData(normalizedInvestments.filter(i => i['Investment Name'] && typeof i['Value'] === 'number'));
+            }
             
-            const investmentCols = ['Investment Name', 'Value', 'Type'];
-            setInvestmentData(normalize(data.investments, investmentCols).filter(i => i['Investment Name'] && typeof i['Value'] === 'number'));
-            
-            localStorage.setItem('smartStepsUrl', url);
             setShowInstructions(false);
             setIsDataLoaded(true);
 
         } catch (err) {
             setError(err.message || 'An unknown error occurred while loading data.');
+            setDebtData([]); setBillData([]); setIncomeData([]); setInvestmentData([]);
             setIsDataLoaded(false);
         } finally {
             setLoading(false);
@@ -832,14 +871,17 @@ const App = () => {
     };
 
     const clearAllData = () => {
-        localStorage.removeItem('smartStepsUrl');
+        localStorage.removeItem('debtSheetUrl');
+        localStorage.removeItem('billSheetUrl');
+        localStorage.removeItem('incomeSheetUrl');
+        localStorage.removeItem('investmentSheetUrl');
         localStorage.removeItem('riskProfile');
         localStorage.removeItem('financialGoals');
         localStorage.removeItem('extraMonthlyPayment');
         localStorage.removeItem('snowflakePayments');
         localStorage.removeItem('targetDebt');
         
-        setSmartStepsUrl('');
+        setDebtSheetUrl(''); setBillSheetUrl(''); setIncomeSheetUrl(''); setInvestmentSheetUrl('');
         setDebtData([]); setBillData([]); setIncomeData([]); setInvestmentData([]);
         setRiskProfile(null);
         setGoals([]);
@@ -1291,9 +1333,24 @@ const App = () => {
                            <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">Get Started</h2>
                             <div className="space-y-4">
                                 <div className="relative">
-                                    <label className="text-sm font-medium text-gray-700">Smart Steps Link</label>
-                                    <Link className="absolute left-3 top-10 h-5 w-5 text-gray-400" />
-                                    <input type="text" value={smartStepsUrl} onChange={(e) => setSmartStepsUrl(e.target.value)} placeholder="Paste your single link from Google Sheets here" className="mt-1 w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"/>
+                                    <label className="text-sm font-medium text-gray-700">Income Sheet Link (Optional)</label>
+                                    <Briefcase className="absolute left-3 top-10 h-5 w-5 text-gray-400" />
+                                    <input type="text" value={incomeSheetUrl} onChange={(e) => setIncomeSheetUrl(e.target.value)} placeholder="Paste 'Income' published sheet link here" className="mt-1 w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"/>
+                                </div>
+                                <div className="relative">
+                                    <label className="text-sm font-medium text-gray-700">Bills Sheet Link (Optional)</label>
+                                    <ClipboardList className="absolute left-3 top-10 h-5 w-5 text-gray-400" />
+                                    <input type="text" value={billSheetUrl} onChange={(e) => setBillSheetUrl(e.target.value)} placeholder="Paste 'Bills' published sheet link here" className="mt-1 w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"/>
+                                </div>
+                                <div className="relative">
+                                    <label className="text-sm font-medium text-gray-700">Debts Sheet Link (Optional)</label>
+                                    <Sheet className="absolute left-3 top-10 h-5 w-5 text-gray-400" />
+                                    <input type="text" value={debtSheetUrl} onChange={(e) => setDebtSheetUrl(e.target.value)} placeholder="Paste 'Debts' published sheet link here" className="mt-1 w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"/>
+                                </div>
+                                <div className="relative">
+                                    <label className="text-sm font-medium text-gray-700">Investments Sheet Link (Optional)</label>
+                                    <Landmark className="absolute left-3 top-10 h-5 w-5 text-gray-400" />
+                                    <input type="text" value={investmentSheetUrl} onChange={(e) => setInvestmentSheetUrl(e.target.value)} placeholder="Paste 'Investments' published sheet link here" className="mt-1 w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"/>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 mt-6">
@@ -1353,22 +1410,12 @@ const App = () => {
                                 />
                                 <div id="income-pie-chart" className="md:col-span-1 bg-white p-4 rounded-lg shadow-md">
                                     <h3 className="text-lg font-bold text-gray-800 mb-2">Income Sources</h3>
-                                    <ResponsiveContainer width="100%" height={150}>
+                                    <ResponsiveContainer width="100%" height={100}>
                                         <PieChart>
-                                            <Pie 
-                                                data={incomeBySource} 
-                                                dataKey="value" 
-                                                nameKey="name" 
-                                                cx="50%" 
-                                                cy="50%" 
-                                                outerRadius={40} 
-                                                fill="#8884d8"
-                                                label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                                            >
+                                            <Pie data={incomeBySource} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={40} fill="#8884d8">
                                                 {incomeBySource.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}
                                             </Pie>
                                             <RechartsTooltip formatter={(value) => `$${value.toLocaleString(undefined, {maximumFractionDigits: 0})}`} />
-                                            <Legend iconSize={10} wrapperStyle={{ fontSize: '12px' }} />
                                         </PieChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -1425,7 +1472,7 @@ const App = () => {
                                                     <label htmlFor="target-debt" className="block text-xs font-medium text-gray-600">Apply To</label>
                                                     <select id="target-debt" value={targetDebt} onChange={e => setTargetDebt(e.target.value)} className="mt-1 block w-full pl-3 pr-8 py-2 text-sm border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md">
                                                         <option value="strategy">Follow Strategy</option>
-                                                        {debtData.map((debt, index) => ( <option key={`${debt['Debt Name']}-${index}`} value={debt['Debt Name']}> {debt['Debt Name']} </option> ))}
+                                                        {debtData.map(debt => ( <option key={debt['Debt Name']} value={debt['Debt Name']}> {debt['Debt Name']} </option> ))}
                                                     </select>
                                                 </div>
                                             </div>
@@ -1477,7 +1524,7 @@ const App = () => {
                                     <table className="w-full text-left text-sm"><thead className="bg-gray-100 text-xs text-gray-700 uppercase"><tr><th className="p-3">Debt Name</th><th className="p-3 text-right">Balance</th><th className="p-3 text-right">APR</th><th className="p-3 text-right">Payoff Date</th><th className="p-3 text-center">Actions</th></tr></thead><tbody>{debtData.map((debt, index) => { const payoffDate = new Date(); payoffDate.setMonth(payoffDate.getMonth() + (payoffData.debtPayoffDates[debt['Debt Name']] || 0)); return ( <tr key={index} className="border-b hover:bg-gray-50"><td className="p-3 font-medium">{debt['Debt Name']}</td><td className="p-3 text-right">${(debt.Balance || 0).toLocaleString()}</td><td className="p-3 text-right">{(debt.APR || 0).toFixed(2)}%</td><td className="p-3 text-right">{payoffData.debtPayoffDates[debt['Debt Name']] ? payoffDate.toLocaleDateString() : 'N/A'}</td><td className="p-3 text-center"><button onClick={() => viewAmortization(debt['Debt Name'])} className="text-blue-600 hover:text-blue-800 text-xs font-semibold">VIEW SCHEDULE</button></td></tr> )})}</tbody></table>
                                 </div>
                             </div>
-                            {billData.length > 0 && <div id="bills-pie-chart" className="bg-white p-6 rounded-lg shadow-md"> <h3 className="text-xl font-bold mb-4 flex items-center"><PieChartIcon className="h-5 w-5 mr-2 text-green-500"/>Monthly Bills by Category</h3> <ResponsiveContainer width="100%" height={300}> <PieChart> <Pie data={billsByCategory} cx="40%" cy="50%" labelLine={false} outerRadius={100} fill="#8884d8" dataKey="value" nameKey="name" label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}> {billsByCategory.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))} </Pie> <RechartsTooltip formatter={(value) => `$${value.toLocaleString()}`} /> <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ right: 0, paddingLeft: '20px' }}/> </PieChart> </ResponsiveContainer> </div> }
+                            {billData.length > 0 && <div id="bills-pie-chart" className="bg-white p-6 rounded-lg shadow-md"> <h3 className="text-xl font-bold mb-4 flex items-center"><PieChartIcon className="h-5 w-5 mr-2 text-green-500"/>Monthly Bills by Category</h3> <ResponsiveContainer width="100%" height={300}> <PieChart> <Pie data={billsByCategory} cx="50%" cy="50%" labelLine={false} outerRadius={100} fill="#8884d8" dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}> {billsByCategory.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))} </Pie> <RechartsTooltip formatter={(value) => `$${value.toLocaleString()}`} /> <Legend /> </PieChart> </ResponsiveContainer> </div> }
                         </div>
                         {billData.length > 0 && ( <div className="bg-white p-6 rounded-lg shadow-md mb-8"> <h3 className="text-xl font-bold mb-4">Bill Details</h3> <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-gray-100 text-xs text-gray-700 uppercase"><tr><th className="p-3">Bill Name</th><th className="p-3">Category</th><th className="p-3 text-right">Amount</th></tr></thead><tbody>{billData.map((bill, index) => ( <tr key={index} className="border-b hover:bg-gray-50"><td className="p-3 font-medium">{bill['Bill Name']}</td><td className="p-3">{bill['Category']}</td><td className="p-3 text-right">${(bill.Amount || 0).toLocaleString()}</td></tr>))}</tbody></table></div></div> )}
                     </>
