@@ -1,36 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { Sheet, DollarSign, Percent, Info, TrendingUp, AlertCircle, Loader, ExternalLink, PieChart as PieChartIcon, ChevronsRight, Award, X, Calendar, Repeat, Download, FileText, RefreshCw, ClipboardList, CheckCircle2, Zap, TrendingDown, Eye, Trash2, Briefcase, Edit, Landmark, Target, PlusCircle, Trash, Shield, BarChart2, Activity, AlertTriangle, GitCommit, Link } from 'lucide-react';
-
-// --- Helper to parse CSV data ---
-const parseCSV = (csvText) => {
-    const lines = csvText.split('\n');
-    if (lines.length < 2) return [];
-    const headers = lines[0].trim().split(',').map(h => h.trim().replace(/\r$/, ''));
-    const data = [];
-    for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (line) {
-            const values = line.split(',');
-            const entry = {};
-            headers.forEach((header, index) => {
-                const value = values[index] ? values[index].trim().replace(/\r$/, '') : '';
-                
-                // More robust number parsing.
-                // It strips common currency symbols and commas before converting to a number.
-                const numericValue = value.toString().replace(/[^0-9.-]+/g,"");
-                
-                if (header.toLowerCase().includes('amount') || header.toLowerCase().includes('balance') || header.toLowerCase().includes('payment') || header.toLowerCase().includes('apr') || header.toLowerCase().includes('value')) {
-                     entry[header] = isNaN(Number(numericValue)) || numericValue === '' ? value : Number(numericValue);
-                } else {
-                    entry[header] = value;
-                }
-            });
-            data.push(entry);
-        }
-    }
-    return data;
-};
+import { Sheet, DollarSign, Percent, Info, TrendingUp, AlertCircle, Loader, ExternalLink, PieChart as PieChartIcon, ChevronsRight, Award, X, Calendar, Repeat, Download, FileText, RefreshCw, ClipboardList, CheckCircle2, Zap, TrendingDown, Eye, Trash2, Briefcase, Edit, Landmark, Target, PlusCircle, Trash, Shield, BarChart2, Activity, AlertTriangle, GitCommit, Link, Sparkles, ArrowLeftRight, Menu, Home as HomeIcon, LayoutDashboard, BookOpen, Handshake } from 'lucide-react';
 
 // --- Colors for Charts ---
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#ff4d4d', '#4BC0C0', '#9966FF', '#FF6384', '#36A2EB'];
@@ -285,11 +255,11 @@ const InvestmentGrowthCalculator = ({ startingAmount: initialStartingAmount, isF
     )
 }
 
-const FinancialGoalSetting = ({ portfolioValue, goals, setGoals }) => {
+const FinancialGoalSetting = ({ portfolioValue, goals, setGoals, financialSummary }) => {
     const [goalName, setGoalName] = useState('');
     const [targetAmount, setTargetAmount] = useState('');
     const [targetDate, setTargetDate] = useState('');
-    const [showPlanner, setShowPlanner] = useState(null);
+    const [generatingPlanId, setGeneratingPlanId] = useState(null);
 
     const addGoal = () => {
         if (goalName && targetAmount && targetDate) {
@@ -304,37 +274,60 @@ const FinancialGoalSetting = ({ portfolioValue, goals, setGoals }) => {
         setGoals(goals.filter(goal => goal.id !== id));
     };
 
-    const createPlan = (id) => {
-        const goal = goals.find(g => g.id === id);
+    const generatePlan = async (goalId) => {
+        const goal = goals.find(g => g.id === goalId);
         if (!goal) return;
 
-        const monthsRemaining = (new Date(goal.date) - new Date()) / (1000 * 60 * 60 * 24 * 30.44);
-        if (monthsRemaining <= 0) {
-             goal.plan = { requiredMonthly: Infinity };
-             setGoals([...goals]);
-             return;
-        }
+        setGeneratingPlanId(goalId);
 
-        const annualReturn = 0.07; // Assuming 7%
-        const monthlyReturn = annualReturn / 12;
-        
-        // Future value of current portfolio portion (simplified for this example)
-        const currentAllocation = Math.min(portfolioValue, goal.amount);
-        const futureValueOfCurrent = currentAllocation * Math.pow(1 + monthlyReturn, monthsRemaining);
-        
-        const remainingAmount = goal.amount - futureValueOfCurrent;
-        
-        if (remainingAmount <= 0) {
-            goal.plan = { requiredMonthly: 0 };
-            setGoals([...goals]);
-            return;
-        }
+        const availableCash = financialSummary.totalMonthlyIncome - financialSummary.totalMonthlyBills - financialSummary.totalMinimumPayment;
 
-        const requiredMonthly = (remainingAmount * monthlyReturn) / (Math.pow(1 + monthlyReturn, monthsRemaining) - 1);
-        
-        goal.plan = { requiredMonthly };
-        setGoals([...goals]);
-        setShowPlanner(id);
+        const prompt = `
+            Create a simple, actionable savings plan for a financial goal.
+            Goal Name: "${goal.name}"
+            Target Amount: $${goal.amount}
+            Target Date: ${goal.date}
+            My current available cash for savings per month is approximately $${availableCash.toFixed(2)}.
+            
+            Provide a short, encouraging plan with 2-3 concrete, realistic steps.
+            The tone should be motivational and clear. Start with a positive opening sentence.
+            Format the output as plain text, using newlines for paragraphs and bullet points (e.g., using '*' or '-').
+        `;
+
+        try {
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+            const payload = { contents: chatHistory };
+            const apiKey = "" 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            
+            let planText = "Could not generate a plan at this time. Please try again later.";
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+              planText = result.candidates[0].content.parts[0].text;
+            }
+
+            const updatedGoals = goals.map(g => 
+                g.id === goalId ? { ...g, plan: { text: planText } } : g
+            );
+            setGoals(updatedGoals);
+
+        } catch (error) {
+            console.error("Error generating savings plan:", error);
+            const updatedGoals = goals.map(g => 
+                g.id === goalId ? { ...g, plan: { text: "Error: Could not connect to the AI planning service." } } : g
+            );
+            setGoals(updatedGoals);
+        } finally {
+            setGeneratingPlanId(null);
+        }
     };
 
     return (
@@ -363,18 +356,20 @@ const FinancialGoalSetting = ({ portfolioValue, goals, setGoals }) => {
                                 <div className="bg-teal-600 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
                             </div>
                             <div className="text-right text-xs mt-1">{progress.toFixed(0)}% Funded</div>
-
-                            <button onClick={() => createPlan(goal.id)} className="text-sm font-semibold text-teal-600 hover:underline mt-2">Create Plan</button>
                             
-                            {showPlanner === goal.id && goal.plan && (
-                                <div className="mt-2 p-3 bg-teal-50 rounded-lg text-center">
-                                    {goal.plan.requiredMonthly === Infinity ? (
-                                        <p className="text-red-600 font-semibold">This goal's date is in the past.</p>
-                                    ) : goal.plan.requiredMonthly <= 0 ? (
-                                        <p className="text-green-600 font-semibold">Congratulations! You are on track to meet this goal without additional contributions.</p>
-                                    ) : (
-                                        <p className="text-teal-800">To reach this goal, you need to contribute <span className="font-bold">${goal.plan.requiredMonthly.toLocaleString(undefined, {maximumFractionDigits: 0})}</span> per month.</p>
-                                    )}
+                            <button 
+                                onClick={() => generatePlan(goal.id)} 
+                                disabled={generatingPlanId === goal.id}
+                                className="text-sm font-semibold text-teal-600 hover:underline mt-2 flex items-center gap-1 disabled:opacity-50"
+                            >
+                                {generatingPlanId === goal.id ? <Loader className="animate-spin h-4 w-4" /> : <Sparkles size={14} className="text-yellow-500" />}
+                                {generatingPlanId === goal.id ? 'Generating...' : '✨ Generate Savings Plan'}
+                            </button>
+                            
+                            {goal.plan && (
+                                <div className="mt-2 p-3 bg-teal-50/50 rounded-lg border border-teal-200">
+                                    <h5 className="font-bold text-teal-800 mb-2 flex items-center gap-2"><Sparkles size={16} /> AI Savings Plan</h5>
+                                    <div className="text-sm text-gray-700 whitespace-pre-wrap">{goal.plan.text}</div>
                                 </div>
                             )}
                         </div>
@@ -499,7 +494,7 @@ const RiskToleranceQuiz = ({ onQuizComplete }) => {
     );
 };
 
-const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, setGoals, generateInvestmentPDF, investmentPdfLoading, pdfLibrariesLoaded, totalValue, simplifiedAllocation }) => {
+const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, setGoals, generateInvestmentPDF, investmentPdfLoading, pdfLibrariesLoaded, totalValue, simplifiedAllocation, financialSummary }) => {
     const [showQuiz, setShowQuiz] = useState(false);
 
     const targetAllocations = {
@@ -507,6 +502,64 @@ const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, set
         Moderate: [{ name: 'Growth', value: 60 }, { name: 'Balanced', value: 30 }, { name: 'Conservative', value: 10 }],
         Aggressive: [{ name: 'Growth', value: 85 }, { name: 'Balanced', value: 10 }, { name: 'Conservative', value: 5 }],
     };
+
+    const {
+        weightedExpenseRatio,
+        annualFees,
+        projectedDividendIncome,
+        allocationByAccountType,
+        hasFeeData,
+        hasDividendData,
+        hasAccountTypeData
+    } = useMemo(() => {
+        if (!data || data.length === 0) return {
+            weightedExpenseRatio: 0,
+            annualFees: 0,
+            projectedDividendIncome: 0,
+            allocationByAccountType: [],
+            hasFeeData: false,
+            hasDividendData: false,
+            hasAccountTypeData: false
+        };
+
+        const totalFees = data.reduce((acc, item) => {
+            const ratio = item['Expense Ratio (%)'] || 0;
+            const value = item.Value || 0;
+            return acc + (value * (ratio / 100));
+        }, 0);
+        const weightedRatio = totalValue > 0 ? (totalFees / totalValue) * 100 : 0;
+
+        const totalDividends = data.reduce((acc, item) => {
+            const yieldVal = item['Dividend Yield (%)'] || 0;
+            const value = item.Value || 0;
+            return acc + (value * (yieldVal / 100));
+        }, 0);
+
+        const accounts = {};
+        data.forEach(item => {
+            const accountType = item['Account Type'] || 'Uncategorized';
+            if (!accounts[accountType]) {
+                accounts[accountType] = 0;
+            }
+            accounts[accountType] += item.Value || 0;
+        });
+        const accountAllocation = Object.keys(accounts).map(name => ({ name, value: accounts[name] }));
+
+        const hasFeeData = data.some(item => item.hasOwnProperty('Expense Ratio (%)'));
+        const hasDividendData = data.some(item => item.hasOwnProperty('Dividend Yield (%)'));
+        const hasAccountTypeData = data.some(item => item.hasOwnProperty('Account Type') && item['Account Type']);
+
+
+        return {
+            weightedExpenseRatio: weightedRatio,
+            annualFees: totalFees,
+            projectedDividendIncome: totalDividends,
+            allocationByAccountType: accountAllocation.filter(a => a.value > 0),
+            hasFeeData,
+            hasDividendData,
+            hasAccountTypeData
+        };
+    }, [data, totalValue]);
 
     const handleQuizComplete = (profile, close = false) => {
         if (profile) setRiskProfile(profile);
@@ -606,11 +659,27 @@ const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, set
         )
     }
 
+    const portfolioTooltipText = (
+        <div className="text-left space-y-2">
+            <p>This dashboard provides a high-level overview of your investment portfolio.</p>
+            <ul className="list-disc list-inside text-xs space-y-1">
+                <li><strong>Stat Cards:</strong> Summarize your total value, projected dividend income, and estimated annual fees based on your funds' expense ratios.</li>
+                <li><strong>Risk Profile:</strong> Assess your risk tolerance to get a suggested asset allocation.</li>
+                <li><strong>Allocation Charts:</strong> Visualize your current portfolio breakdown vs. your target and see your holdings by account type.</li>
+            </ul>
+        </div>
+    );
+
     return (
         <>
             {showQuiz && <RiskToleranceQuiz onQuizComplete={handleQuizComplete} />}
             <div className="flex flex-col md:flex-row justify-between md:items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">Investment Portfolio</h2>
+                <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-bold text-gray-800">Investment Portfolio</h2>
+                    <Tooltip text={portfolioTooltipText}>
+                        <Info size={16} className="text-gray-400 cursor-pointer" />
+                    </Tooltip>
+                </div>
                 <button
                     onClick={generateInvestmentPDF}
                     disabled={!pdfLibrariesLoaded || investmentPdfLoading}
@@ -622,7 +691,35 @@ const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, set
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <StatCard icon={<Landmark className="h-6 w-6 text-white"/>} title="Total Portfolio Value" value={`$${totalValue.toLocaleString(undefined, {maximumFractionDigits: 2})}`} color="bg-teal-500" />
+                <StatCard 
+                    icon={<Landmark className="h-6 w-6 text-white"/>} 
+                    title="Total Portfolio Value" 
+                    value={`$${totalValue.toLocaleString(undefined, {maximumFractionDigits: 2})}`} 
+                    color="bg-teal-500"
+                    tooltipText="This is the total current market value of all the investments listed in your 'Investments' sheet."
+                />
+                {hasDividendData && <StatCard 
+                    icon={<DollarSign className="h-6 w-6 text-white"/>} 
+                    title="Projected Annual Dividend" 
+                    value={`$${projectedDividendIncome.toLocaleString(undefined, {maximumFractionDigits: 2})}`} 
+                    color="bg-sky-500" 
+                    tooltipText="An estimation of the total dividends you'll receive in a year, based on the 'Dividend Yield (%)' you provided for each investment."
+                />}
+                {hasFeeData && <StatCard 
+                    icon={<Percent className="h-6 w-6 text-white"/>} 
+                    title="Weighted Expense Ratio" 
+                    value={`${weightedExpenseRatio.toFixed(3)}%`} 
+                    color="bg-amber-500" 
+                    tooltipText="The average expense ratio of your entire portfolio, weighted by the value of each investment. A lower number is better."
+                />}
+                {hasFeeData && <StatCard 
+                    icon={<TrendingDown className="h-6 w-6 text-white"/>} 
+                    title="Estimated Annual Fees" 
+                    value={`$${annualFees.toLocaleString(undefined, {maximumFractionDigits: 2})}`} 
+                    color="bg-red-500" 
+                    tooltipText="The approximate amount you'll pay in management fees over a year, calculated from your portfolio's value and the weighted expense ratio."
+                />}
+                
                 {riskProfile ? (
                     <StatCard 
                         icon={React.createElement(riskProfile.icon, {className: "h-6 w-6 text-white"})}
@@ -630,6 +727,7 @@ const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, set
                         value={riskProfile.name}
                         color={riskProfile.color}
                         description={riskProfile.description}
+                        tooltipText="This is based on your answers to the risk tolerance quiz. It helps determine a target asset allocation that aligns with your comfort level for risk."
                     />
                 ) : (
                     <div className="bg-white p-4 rounded-lg shadow-md flex items-center justify-center text-center">
@@ -650,46 +748,62 @@ const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, set
                 </div>
             </div>
 
-            {riskProfile && (
-                <div id="allocation-comparison-section" className="bg-white p-6 rounded-lg shadow-md mb-8">
-                    <h3 className="text-xl font-bold mb-4">Allocation Comparison</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                        <div className="text-center">
-                            <h4 className="font-semibold mb-2">Your Current Allocation</h4>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie data={simplifiedAllocation} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`} isAnimationActive={false}>
-                                        {simplifiedAllocation.map((entry) => (<Cell key={entry.name} fill={ALLOCATION_COLORS[entry.name]} />))}
-                                    </Pie>
-                                    <RechartsTooltip formatter={(value) => `$${value.toLocaleString()}`} />
-                                    <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ right: -10 }} />
-                                </PieChart>
-                            </ResponsiveContainer>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                {riskProfile && (
+                    <div id="allocation-comparison-section" className="bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold mb-4">Allocation Comparison</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                            <div className="text-center">
+                                <h4 className="font-semibold mb-2">Your Current Allocation</h4>
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <PieChart>
+                                        <Pie data={simplifiedAllocation} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`} isAnimationActive={false}>
+                                            {simplifiedAllocation.map((entry) => (<Cell key={entry.name} fill={ALLOCATION_COLORS[entry.name]} />))}
+                                        </Pie>
+                                        <RechartsTooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                                        <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ right: -10 }} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="text-center">
+                                <h4 className="font-semibold mb-2">Target for '{riskProfile.name}' Profile</h4>
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <PieChart>
+                                        <Pie data={targetAllocations[riskProfile.name]} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, value }) => `${value}%`} isAnimationActive={false}>
+                                            {targetAllocations[riskProfile.name].map((entry) => (<Cell key={entry.name} fill={ALLOCATION_COLORS[entry.name]} />))}
+                                        </Pie>
+                                        <RechartsTooltip formatter={(value) => `${value}%`} />
+                                        <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ right: -10 }} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
                         </div>
-                        <div className="text-center">
-                            <h4 className="font-semibold mb-2">Target for '{riskProfile.name}' Profile</h4>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie data={targetAllocations[riskProfile.name]} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, value }) => `${value}%`} isAnimationActive={false}>
-                                        {targetAllocations[riskProfile.name].map((entry) => (<Cell key={entry.name} fill={ALLOCATION_COLORS[entry.name]} />))}
-                                    </Pie>
-                                    <RechartsTooltip formatter={(value) => `${value}%`} />
-                                    <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ right: -10 }} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
+                        <RebalancingSuggestions />
                     </div>
-                    <RebalancingSuggestions />
-                </div>
-            )}
+                )}
+
+                {hasAccountTypeData && (
+                    <div id="account-type-chart" className="bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold mb-4">Allocation by Account Type</h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <PieChart>
+                                <Pie data={allocationByAccountType} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                                    {allocationByAccountType.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}
+                                </Pie>
+                                <RechartsTooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                )}
+            </div>
 
             <div className="bg-white p-6 rounded-lg shadow-md mt-8">
                 <h3 className="text-xl font-bold mb-4">Investment Details</h3>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm"><thead className="bg-gray-100 text-xs text-gray-700 uppercase"><tr><th className="p-3">Investment Name</th><th className="p-3">Type</th><th className="p-3 text-right">Value</th></tr></thead><tbody>{data.map((item, index) => ( <tr key={index} className="border-b hover:bg-gray-50"><td className="p-3 font-medium">{item['Investment Name']}</td><td className="p-3">{item.Type}</td><td className="p-3 text-right">${(item.Value || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>))}</tbody></table>
+                    <table className="w-full text-left text-sm"><thead className="bg-gray-100 text-xs text-gray-700 uppercase"><tr><th className="p-3">Investment Name</th><th className="p-3">Type</th><th className="p-3 text-right">Value</th><th className="p-3 text-right">Expense Ratio</th><th className="p-3 text-right">Dividend Yield</th><th className="p-3">Account Type</th></tr></thead><tbody>{data.map((item, index) => ( <tr key={index} className="border-b hover:bg-gray-50"><td className="p-3 font-medium">{item['Investment Name']}</td><td className="p-3">{item.Type}</td><td className="p-3 text-right">${(item.Value || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td><td className="p-3 text-right">{typeof item['Expense Ratio (%)'] === 'number' ? `${item['Expense Ratio (%)']}%` : 'N/A'}</td><td className="p-3 text-right">{typeof item['Dividend Yield (%)'] === 'number' ? `${item['Dividend Yield (%)']}%` : 'N/A'}</td><td className="p-3">{item['Account Type'] || 'N/A'}</td></tr>))}</tbody></table>
                 </div>
             </div>
-            <FinancialGoalSetting portfolioValue={totalValue} goals={goals} setGoals={setGoals} />
+            <FinancialGoalSetting portfolioValue={totalValue} goals={goals} setGoals={setGoals} financialSummary={financialSummary} />
             <InvestmentGrowthCalculator startingAmount={totalValue} isForPdf={investmentPdfLoading} />
             <RetirementReadinessSimulator startingAmount={totalValue} />
         </>
@@ -793,7 +907,7 @@ const App = () => {
                         let value = foundKey ? row[foundKey] : undefined;
 
                         // Smart number conversion
-                        if (['balance', 'apr', 'minimum payment', 'amount', 'value'].includes(col.toLowerCase())) {
+                        if (['balance', 'apr', 'minimum payment', 'amount', 'value', 'expense ratio (%)', 'dividend yield (%)'].includes(col.toLowerCase())) {
                             if (typeof value === 'string') {
                                 const numericValue = value.replace(/[^0-9.-]+/g,"");
                                 value = isNaN(Number(numericValue)) || numericValue === '' ? 0 : Number(numericValue);
@@ -816,7 +930,7 @@ const App = () => {
             const incomeCols = ['Income Source', 'Amount', 'Frequency'];
             setIncomeData(normalize(data.income, incomeCols).filter(i => i['Income Source'] && typeof i['Amount'] === 'number'));
             
-            const investmentCols = ['Investment Name', 'Value', 'Type'];
+            const investmentCols = ['Investment Name', 'Value', 'Type', 'Expense Ratio (%)', 'Dividend Yield (%)', 'Account Type'];
             setInvestmentData(normalize(data.investments, investmentCols).filter(i => i['Investment Name'] && typeof i['Value'] === 'number'));
             
             localStorage.setItem('smartStepsUrl', url);
@@ -1319,7 +1433,7 @@ const App = () => {
                                     {loading ? 'Reloading...' : 'Reload Data'}
                                 </button>
                                 <button onClick={() => setIsDataLoaded(false)} className="text-sm font-semibold text-gray-600 hover:underline flex items-center gap-2">
-                                    <Edit size={14} /> Change Sheet Links
+                                    <Edit size={14} /> Change Sheet Link
                                 </button>
                                 <button onClick={clearAllData} className="text-sm font-semibold text-red-600 hover:underline flex items-center gap-2">
                                     <Trash2 size={14} /> Clear All Data
@@ -1495,6 +1609,7 @@ const App = () => {
                         pdfLibrariesLoaded={pdfLibrariesLoaded}
                         totalValue={totalValue}
                         simplifiedAllocation={simplifiedAllocation}
+                        financialSummary={{ totalMonthlyIncome, totalMonthlyBills, totalMinimumPayment }}
                     />
                 )}
             </div>
