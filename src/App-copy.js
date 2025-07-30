@@ -1,38 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { Sheet, DollarSign, Percent, Info, TrendingUp, AlertCircle, Loader, ExternalLink, PieChart as PieChartIcon, ChevronsRight, Award, X, Calendar, Repeat, Download, FileText, RefreshCw, ClipboardList, CheckCircle2, Zap, TrendingDown, Eye, Trash2, Briefcase, Edit, Landmark, Target, PlusCircle, Trash, Shield, BarChart2, Activity, AlertTriangle, GitCommit } from 'lucide-react';
+import { Sheet, DollarSign, Percent, Info, TrendingUp, AlertCircle, Loader, ExternalLink, PieChart as PieChartIcon, ChevronsRight, Award, X, Calendar, Repeat, Download, FileText, RefreshCw, ClipboardList, CheckCircle2, Zap, TrendingDown, Eye, Trash2, Briefcase, Edit, Landmark, Target, PlusCircle, Trash, Shield, BarChart2, Activity, AlertTriangle, GitCommit, Link, Sparkles, ArrowLeftRight, Menu, Home as HomeIcon, LayoutDashboard, BookOpen, Handshake } from 'lucide-react';
 
-// Helper to parse CSV data
-const parseCSV = (csvText) => {
-    const lines = csvText.split('\n');
-    if (lines.length < 2) return [];
-    const headers = lines[0].trim().split(',').map(h => h.trim().replace(/\r$/, ''));
-    const data = [];
-    for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (line) {
-            const values = line.split(',');
-            const entry = {};
-            headers.forEach((header, index) => {
-                const value = values[index] ? values[index].trim().replace(/\r$/, '') : '';
-                
-                // More robust number parsing.
-                // It strips common currency symbols and commas before converting to a number.
-                const numericValue = value.toString().replace(/[^0-9.-]+/g,"");
-                
-                if (header.toLowerCase().includes('amount') || header.toLowerCase().includes('balance') || header.toLowerCase().includes('payment') || header.toLowerCase().includes('apr') || header.toLowerCase().includes('value')) {
-                     entry[header] = isNaN(Number(numericValue)) || numericValue === '' ? value : Number(numericValue);
-                } else {
-                    entry[header] = value;
-                }
-            });
-            data.push(entry);
-        }
-    }
-    return data;
-};
-
-// Colors for the pie charts
+// --- Colors for Charts ---
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#ff4d4d', '#4BC0C0', '#9966FF', '#FF6384', '#36A2EB'];
 const ALLOCATION_COLORS = { 'Growth': '#22c55e', 'Balanced': '#facc15', 'Conservative': '#3b82f6' };
 
@@ -138,7 +108,7 @@ const Tooltip = ({ text, children }) => {
 
 // --- Child Components defined outside App for stability ---
 
-const Instructions = () => ( <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md mb-6 shadow-sm"> <h3 className="text-lg font-semibold flex items-center"><Info className="h-6 w-6 mr-3" />How to use this tool</h3> <div className="text-sm space-y-2 mt-2"> <p>This tool visualizes your financial data from Google Sheets. To get started:</p> <p>1. <strong>Use the Template:</strong> Start by making a copy of the official <a href="https://docs.google.com/spreadsheets/d/1hD7oQM8cgB9EBhs1wHuBgaSFOwLH1a_TGg4jU84vfFw/edit?usp=sharing" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-semibold">Template Sheet <ExternalLink className="h-3 w-3 ml-1 inline"/></a>. It has the required tabs.</p> <p>2. <strong>Publish Each Tab:</strong> For each tab you want to use ('Debts', 'Bills', 'Income', 'Investments'), you must publish it to the web. Click on the tab, then go to <code className="bg-blue-100 text-blue-800 px-1 rounded">File</code> &rarr; <code className="bg-blue-100 text-blue-800 px-1 rounded">Share</code> &rarr; <code className="bg-blue-100 text-blue-800 px-1 rounded">Publish to web</code>. In the dialog, select the specific sheet, choose 'Comma-separated values (.csv)', and click Publish. Copy the unique generated link for that tab.</p> <p>3. <strong>Paste Links Above:</strong> Paste each link into its corresponding input field above these instructions.</p></div></div> );
+const Instructions = () => ( <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md mb-6 shadow-sm"> <h3 className="text-lg font-semibold flex items-center"><Info className="h-6 w-6 mr-3" />How to use this tool</h3> <div className="text-sm space-y-2 mt-2"> <p>This tool visualizes your financial data from Google Sheets. To get started:</p> <p>1. <strong>Use the Template:</strong> Start by making a copy of the official <a href="https://docs.google.com/spreadsheets/d/1K90Ob__8JY7QyLKEPCjQCDOyGdPMcbrwF67jGpYQMCs/edit?usp=sharing" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-semibold">Template Sheet <ExternalLink className="h-3 w-3 ml-1 inline"/></a>. It has the required tabs.</p> <p>2. <strong>Get Your Link:</strong> Inside your copied sheet, find the new menu item: <code className="bg-blue-100 text-blue-800 px-1 rounded">Smart Steps Menu</code> &rarr; <code className="bg-blue-100 text-blue-800 px-1 rounded">Get Web App Link</code>. The first time you click this, you will need to authorize the script.</p> <p>3. <strong>Paste Your Link Above:</strong> Copy the single link provided in the dialog box and paste it into the input field above.</p></div></div> );
 const StatCard = ({ icon, title, value, baseValue, color, tooltipText, description }) => ( <div className="bg-white p-4 rounded-lg shadow-md transition-transform hover:scale-105 hover:-translate-y-1"> <div className="flex items-center"> <div className={`p-3 rounded-full mr-4 ${color}`}>{icon}</div> <div> <div className="flex items-center"> <p className="text-sm text-gray-500">{title}</p> {tooltipText && ( <Tooltip text={tooltipText}> <Info size={14} className="ml-1.5 text-gray-400 hover:text-gray-600 cursor-pointer" /> </Tooltip> )} </div> <p className="text-2xl font-bold text-gray-800">{value}</p> </div> </div> {baseValue && value !== baseValue && ( <div className="mt-2 text-sm text-center"> <span className="text-gray-500 line-through">{baseValue}</span> <ChevronsRight className="inline h-4 w-4 mx-1 text-green-500" /> <span className="font-bold text-green-600">{value}</span> </div> )} {description && <p className="text-xs text-gray-500 mt-2">{description}</p>}</div> );
 const ImpactModal = ({ impactData, setShowImpactModal }) => ( <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"> <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full text-center relative"> <button onClick={() => setShowImpactModal(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"><X /></button> <Award className="h-16 w-16 text-yellow-400 mx-auto mb-4" /> <h2 className="text-2xl font-bold text-gray-800 mb-2">Amazing!</h2> <p className="text-lg text-gray-600">That <span className="font-bold text-green-600">${impactData.amount.toLocaleString()}</span> payment made a huge difference!</p> <div className="mt-6 space-y-3"> <div className="bg-green-50 p-3 rounded-lg"> <p className="text-sm text-green-800">You'll be debt-free</p> <p className="text-xl font-bold text-green-600">{impactData.monthsSaved} months sooner!</p> </div> <div className="bg-blue-50 p-3 rounded-lg"> <p className="text-sm text-blue-800">You'll save an extra</p> <p className="text-xl font-bold text-blue-600">${impactData.interestSaved.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} in interest!</p> </div> </div> </div> </div> );
 const AmortizationModal = ({ amortizationData, setShowAmortizationModal }) => ( <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"> <div className="bg-white rounded-lg shadow-2xl p-6 max-w-2xl w-full text-center relative"> <button onClick={() => setShowAmortizationModal(false)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><X /></button> <h2 className="text-2xl font-bold text-gray-800 mb-4">Amortization Schedule for {amortizationData?.id}</h2> <div className="overflow-y-auto h-96"><table className="w-full text-sm text-left"><thead className="bg-gray-100 text-xs text-gray-700 uppercase sticky top-0"><tr><th className="p-2">Month</th><th className="p-2 text-right">Payment</th><th className="p-2 text-right">Principal</th><th className="p-2 text-right">Interest</th><th className="p-2 text-right">Remaining Balance</th></tr></thead><tbody>{amortizationData?.amortization.map(row => ( <tr key={row.month} className="border-b"><td className="p-2">{row.month}</td><td className="p-2 text-right">${row.payment.toFixed(2)}</td><td className="p-2 text-right">${row.principal.toFixed(2)}</td><td className="p-2 text-right">${row.interest.toFixed(2)}</td><td className="p-2 text-right">${row.balance.toFixed(2)}</td></tr>))}</tbody></table></div></div></div> );
@@ -285,11 +255,11 @@ const InvestmentGrowthCalculator = ({ startingAmount: initialStartingAmount, isF
     )
 }
 
-const FinancialGoalSetting = ({ portfolioValue, goals, setGoals }) => {
+const FinancialGoalSetting = ({ portfolioValue, goals, setGoals, financialSummary }) => {
     const [goalName, setGoalName] = useState('');
     const [targetAmount, setTargetAmount] = useState('');
     const [targetDate, setTargetDate] = useState('');
-    const [showPlanner, setShowPlanner] = useState(null);
+    const [generatingPlanId, setGeneratingPlanId] = useState(null);
 
     const addGoal = () => {
         if (goalName && targetAmount && targetDate) {
@@ -304,37 +274,60 @@ const FinancialGoalSetting = ({ portfolioValue, goals, setGoals }) => {
         setGoals(goals.filter(goal => goal.id !== id));
     };
 
-    const createPlan = (id) => {
-        const goal = goals.find(g => g.id === id);
+    const generatePlan = async (goalId) => {
+        const goal = goals.find(g => g.id === goalId);
         if (!goal) return;
 
-        const monthsRemaining = (new Date(goal.date) - new Date()) / (1000 * 60 * 60 * 24 * 30.44);
-        if (monthsRemaining <= 0) {
-             goal.plan = { requiredMonthly: Infinity };
-             setGoals([...goals]);
-             return;
-        }
+        setGeneratingPlanId(goalId);
 
-        const annualReturn = 0.07; // Assuming 7%
-        const monthlyReturn = annualReturn / 12;
-        
-        // Future value of current portfolio portion (simplified for this example)
-        const currentAllocation = Math.min(portfolioValue, goal.amount);
-        const futureValueOfCurrent = currentAllocation * Math.pow(1 + monthlyReturn, monthsRemaining);
-        
-        const remainingAmount = goal.amount - futureValueOfCurrent;
-        
-        if (remainingAmount <= 0) {
-            goal.plan = { requiredMonthly: 0 };
-            setGoals([...goals]);
-            return;
-        }
+        const availableCash = financialSummary.totalMonthlyIncome - financialSummary.totalMonthlyBills - financialSummary.totalMinimumPayment;
 
-        const requiredMonthly = (remainingAmount * monthlyReturn) / (Math.pow(1 + monthlyReturn, monthsRemaining) - 1);
-        
-        goal.plan = { requiredMonthly };
-        setGoals([...goals]);
-        setShowPlanner(id);
+        const prompt = `
+            Create a simple, actionable savings plan for a financial goal.
+            Goal Name: "${goal.name}"
+            Target Amount: $${goal.amount}
+            Target Date: ${goal.date}
+            My current available cash for savings per month is approximately $${availableCash.toFixed(2)}.
+            
+            Provide a short, encouraging plan with 2-3 concrete, realistic steps.
+            The tone should be motivational and clear. Start with a positive opening sentence.
+            Format the output as plain text, using newlines for paragraphs and bullet points (e.g., using '*' or '-').
+        `;
+
+        try {
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+            const payload = { contents: chatHistory };
+            const apiKey = "" 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            
+            let planText = "Could not generate a plan at this time. Please try again later.";
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+              planText = result.candidates[0].content.parts[0].text;
+            }
+
+            const updatedGoals = goals.map(g => 
+                g.id === goalId ? { ...g, plan: { text: planText } } : g
+            );
+            setGoals(updatedGoals);
+
+        } catch (error) {
+            console.error("Error generating savings plan:", error);
+            const updatedGoals = goals.map(g => 
+                g.id === goalId ? { ...g, plan: { text: "Error: Could not connect to the AI planning service." } } : g
+            );
+            setGoals(updatedGoals);
+        } finally {
+            setGeneratingPlanId(null);
+        }
     };
 
     return (
@@ -363,18 +356,20 @@ const FinancialGoalSetting = ({ portfolioValue, goals, setGoals }) => {
                                 <div className="bg-teal-600 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
                             </div>
                             <div className="text-right text-xs mt-1">{progress.toFixed(0)}% Funded</div>
-
-                            <button onClick={() => createPlan(goal.id)} className="text-sm font-semibold text-teal-600 hover:underline mt-2">Create Plan</button>
                             
-                            {showPlanner === goal.id && goal.plan && (
-                                <div className="mt-2 p-3 bg-teal-50 rounded-lg text-center">
-                                    {goal.plan.requiredMonthly === Infinity ? (
-                                        <p className="text-red-600 font-semibold">This goal's date is in the past.</p>
-                                    ) : goal.plan.requiredMonthly <= 0 ? (
-                                        <p className="text-green-600 font-semibold">Congratulations! You are on track to meet this goal without additional contributions.</p>
-                                    ) : (
-                                        <p className="text-teal-800">To reach this goal, you need to contribute <span className="font-bold">${goal.plan.requiredMonthly.toLocaleString(undefined, {maximumFractionDigits: 0})}</span> per month.</p>
-                                    )}
+                            <button 
+                                onClick={() => generatePlan(goal.id)} 
+                                disabled={generatingPlanId === goal.id}
+                                className="text-sm font-semibold text-teal-600 hover:underline mt-2 flex items-center gap-1 disabled:opacity-50"
+                            >
+                                {generatingPlanId === goal.id ? <Loader className="animate-spin h-4 w-4" /> : <Sparkles size={14} className="text-yellow-500" />}
+                                {generatingPlanId === goal.id ? 'Generating...' : '✨ Generate Savings Plan'}
+                            </button>
+                            
+                            {goal.plan && (
+                                <div className="mt-2 p-3 bg-teal-50/50 rounded-lg border border-teal-200">
+                                    <h5 className="font-bold text-teal-800 mb-2 flex items-center gap-2"><Sparkles size={16} /> AI Savings Plan</h5>
+                                    <div className="text-sm text-gray-700 whitespace-pre-wrap">{goal.plan.text}</div>
                                 </div>
                             )}
                         </div>
@@ -499,7 +494,7 @@ const RiskToleranceQuiz = ({ onQuizComplete }) => {
     );
 };
 
-const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, setGoals, generateInvestmentPDF, investmentPdfLoading, pdfLibrariesLoaded, totalValue, simplifiedAllocation }) => {
+const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, setGoals, generateInvestmentPDF, investmentPdfLoading, pdfLibrariesLoaded, totalValue, simplifiedAllocation, financialSummary }) => {
     const [showQuiz, setShowQuiz] = useState(false);
 
     const targetAllocations = {
@@ -507,6 +502,64 @@ const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, set
         Moderate: [{ name: 'Growth', value: 60 }, { name: 'Balanced', value: 30 }, { name: 'Conservative', value: 10 }],
         Aggressive: [{ name: 'Growth', value: 85 }, { name: 'Balanced', value: 10 }, { name: 'Conservative', value: 5 }],
     };
+
+    const {
+        weightedExpenseRatio,
+        annualFees,
+        projectedDividendIncome,
+        allocationByAccountType,
+        hasFeeData,
+        hasDividendData,
+        hasAccountTypeData
+    } = useMemo(() => {
+        if (!data || data.length === 0) return {
+            weightedExpenseRatio: 0,
+            annualFees: 0,
+            projectedDividendIncome: 0,
+            allocationByAccountType: [],
+            hasFeeData: false,
+            hasDividendData: false,
+            hasAccountTypeData: false
+        };
+
+        const totalFees = data.reduce((acc, item) => {
+            const ratio = item['Expense Ratio (%)'] || 0;
+            const value = item.Value || 0;
+            return acc + (value * (ratio / 100));
+        }, 0);
+        const weightedRatio = totalValue > 0 ? (totalFees / totalValue) * 100 : 0;
+
+        const totalDividends = data.reduce((acc, item) => {
+            const yieldVal = item['Dividend Yield (%)'] || 0;
+            const value = item.Value || 0;
+            return acc + (value * (yieldVal / 100));
+        }, 0);
+
+        const accounts = {};
+        data.forEach(item => {
+            const accountType = item['Account Type'] || 'Uncategorized';
+            if (!accounts[accountType]) {
+                accounts[accountType] = 0;
+            }
+            accounts[accountType] += item.Value || 0;
+        });
+        const accountAllocation = Object.keys(accounts).map(name => ({ name, value: accounts[name] }));
+
+        const hasFeeData = data.some(item => item.hasOwnProperty('Expense Ratio (%)'));
+        const hasDividendData = data.some(item => item.hasOwnProperty('Dividend Yield (%)'));
+        const hasAccountTypeData = data.some(item => item.hasOwnProperty('Account Type') && item['Account Type']);
+
+
+        return {
+            weightedExpenseRatio: weightedRatio,
+            annualFees: totalFees,
+            projectedDividendIncome: totalDividends,
+            allocationByAccountType: accountAllocation.filter(a => a.value > 0),
+            hasFeeData,
+            hasDividendData,
+            hasAccountTypeData
+        };
+    }, [data, totalValue]);
 
     const handleQuizComplete = (profile, close = false) => {
         if (profile) setRiskProfile(profile);
@@ -606,11 +659,27 @@ const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, set
         )
     }
 
+    const portfolioTooltipText = (
+        <div className="text-left space-y-2">
+            <p>This dashboard provides a high-level overview of your investment portfolio.</p>
+            <ul className="list-disc list-inside text-xs space-y-1">
+                <li><strong>Stat Cards:</strong> Summarize your total value, projected dividend income, and estimated annual fees based on your funds' expense ratios.</li>
+                <li><strong>Risk Profile:</strong> Assess your risk tolerance to get a suggested asset allocation.</li>
+                <li><strong>Allocation Charts:</strong> Visualize your current portfolio breakdown vs. your target and see your holdings by account type.</li>
+            </ul>
+        </div>
+    );
+
     return (
         <>
             {showQuiz && <RiskToleranceQuiz onQuizComplete={handleQuizComplete} />}
             <div className="flex flex-col md:flex-row justify-between md:items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">Investment Portfolio</h2>
+                <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-bold text-gray-800">Investment Portfolio</h2>
+                    <Tooltip text={portfolioTooltipText}>
+                        <Info size={16} className="text-gray-400 cursor-pointer" />
+                    </Tooltip>
+                </div>
                 <button
                     onClick={generateInvestmentPDF}
                     disabled={!pdfLibrariesLoaded || investmentPdfLoading}
@@ -622,14 +691,43 @@ const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, set
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <StatCard icon={<Landmark className="h-6 w-6 text-white"/>} title="Total Portfolio Value" value={`$${totalValue.toLocaleString(undefined, {maximumFractionDigits: 2})}`} color="bg-teal-500" />
+                <StatCard 
+                    icon={<Landmark className="h-6 w-6 text-white"/>} 
+                    title="Total Portfolio Value" 
+                    value={`$${totalValue.toLocaleString(undefined, {maximumFractionDigits: 2})}`} 
+                    color="bg-teal-500"
+                    tooltipText="This is the total current market value of all the investments listed in your 'Investments' sheet."
+                />
+                {hasDividendData && <StatCard 
+                    icon={<DollarSign className="h-6 w-6 text-white"/>} 
+                    title="Projected Annual Dividend" 
+                    value={`$${projectedDividendIncome.toLocaleString(undefined, {maximumFractionDigits: 2})}`} 
+                    color="bg-sky-500" 
+                    tooltipText="An estimation of the total dividends you'll receive in a year, based on the 'Dividend Yield (%)' you provided for each investment."
+                />}
+                {hasFeeData && <StatCard 
+                    icon={<Percent className="h-6 w-6 text-white"/>} 
+                    title="Weighted Expense Ratio" 
+                    value={`${weightedExpenseRatio.toFixed(3)}%`} 
+                    color="bg-amber-500" 
+                    tooltipText="The average expense ratio of your entire portfolio, weighted by the value of each investment. A lower number is better."
+                />}
+                {hasFeeData && <StatCard 
+                    icon={<TrendingDown className="h-6 w-6 text-white"/>} 
+                    title="Estimated Annual Fees" 
+                    value={`$${annualFees.toLocaleString(undefined, {maximumFractionDigits: 2})}`} 
+                    color="bg-red-500" 
+                    tooltipText="The approximate amount you'll pay in management fees over a year, calculated from your portfolio's value and the weighted expense ratio."
+                />}
+                
                 {riskProfile ? (
                     <StatCard 
-                        icon={typeof riskProfile.icon === 'function' ? React.createElement(riskProfile.icon, {className: "h-6 w-6 text-white"}) : null}
+                        icon={React.createElement(riskProfile.icon, {className: "h-6 w-6 text-white"})}
                         title="Your Risk Profile"
                         value={riskProfile.name}
                         color={riskProfile.color}
                         description={riskProfile.description}
+                        tooltipText="This is based on your answers to the risk tolerance quiz. It helps determine a target asset allocation that aligns with your comfort level for risk."
                     />
                 ) : (
                     <div className="bg-white p-4 rounded-lg shadow-md flex items-center justify-center text-center">
@@ -650,44 +748,62 @@ const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, set
                 </div>
             </div>
 
-            {riskProfile && (
-                <div id="allocation-comparison-section" className="bg-white p-6 rounded-lg shadow-md mb-8">
-                    <h3 className="text-xl font-bold mb-4">Allocation Comparison</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                        <div className="text-center">
-                            <h4 className="font-semibold mb-2">Your Current Allocation</h4>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie data={simplifiedAllocation} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} isAnimationActive={false}>
-                                        {simplifiedAllocation.map((entry) => (<Cell key={entry.name} fill={ALLOCATION_COLORS[entry.name]} />))}
-                                    </Pie>
-                                    <RechartsTooltip formatter={(value) => `$${value.toLocaleString()}`} />
-                                </PieChart>
-                            </ResponsiveContainer>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                {riskProfile && (
+                    <div id="allocation-comparison-section" className="bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold mb-4">Allocation Comparison</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                            <div className="text-center">
+                                <h4 className="font-semibold mb-2">Your Current Allocation</h4>
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <PieChart>
+                                        <Pie data={simplifiedAllocation} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`} isAnimationActive={false}>
+                                            {simplifiedAllocation.map((entry) => (<Cell key={entry.name} fill={ALLOCATION_COLORS[entry.name]} />))}
+                                        </Pie>
+                                        <RechartsTooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                                        <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ right: -10 }} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="text-center">
+                                <h4 className="font-semibold mb-2">Target for '{riskProfile.name}' Profile</h4>
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <PieChart>
+                                        <Pie data={targetAllocations[riskProfile.name]} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, value }) => `${value}%`} isAnimationActive={false}>
+                                            {targetAllocations[riskProfile.name].map((entry) => (<Cell key={entry.name} fill={ALLOCATION_COLORS[entry.name]} />))}
+                                        </Pie>
+                                        <RechartsTooltip formatter={(value) => `${value}%`} />
+                                        <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ right: -10 }} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
                         </div>
-                        <div className="text-center">
-                            <h4 className="font-semibold mb-2">Target for '{riskProfile.name}' Profile</h4>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie data={targetAllocations[riskProfile.name]} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, value }) => `${name} ${value}%`} isAnimationActive={false}>
-                                        {targetAllocations[riskProfile.name].map((entry) => (<Cell key={entry.name} fill={ALLOCATION_COLORS[entry.name]} />))}
-                                    </Pie>
-                                    <RechartsTooltip formatter={(value) => `${value}%`} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
+                        <RebalancingSuggestions />
                     </div>
-                    <RebalancingSuggestions />
-                </div>
-            )}
+                )}
+
+                {hasAccountTypeData && (
+                    <div id="account-type-chart" className="bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold mb-4">Allocation by Account Type</h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <PieChart>
+                                <Pie data={allocationByAccountType} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                                    {allocationByAccountType.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}
+                                </Pie>
+                                <RechartsTooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                )}
+            </div>
 
             <div className="bg-white p-6 rounded-lg shadow-md mt-8">
                 <h3 className="text-xl font-bold mb-4">Investment Details</h3>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm"><thead className="bg-gray-100 text-xs text-gray-700 uppercase"><tr><th className="p-3">Investment Name</th><th className="p-3">Type</th><th className="p-3 text-right">Value</th></tr></thead><tbody>{data.map((item, index) => ( <tr key={index} className="border-b hover:bg-gray-50"><td className="p-3 font-medium">{item['Investment Name']}</td><td className="p-3">{item.Type}</td><td className="p-3 text-right">${(item.Value || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>))}</tbody></table>
+                    <table className="w-full text-left text-sm"><thead className="bg-gray-100 text-xs text-gray-700 uppercase"><tr><th className="p-3">Investment Name</th><th className="p-3">Type</th><th className="p-3 text-right">Value</th><th className="p-3 text-right">Expense Ratio</th><th className="p-3 text-right">Dividend Yield</th><th className="p-3">Account Type</th></tr></thead><tbody>{data.map((item, index) => ( <tr key={index} className="border-b hover:bg-gray-50"><td className="p-3 font-medium">{item['Investment Name']}</td><td className="p-3">{item.Type}</td><td className="p-3 text-right">${(item.Value || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td><td className="p-3 text-right">{typeof item['Expense Ratio (%)'] === 'number' ? `${item['Expense Ratio (%)']}%` : 'N/A'}</td><td className="p-3 text-right">{typeof item['Dividend Yield (%)'] === 'number' ? `${item['Dividend Yield (%)']}%` : 'N/A'}</td><td className="p-3">{item['Account Type'] || 'N/A'}</td></tr>))}</tbody></table>
                 </div>
             </div>
-            <FinancialGoalSetting portfolioValue={totalValue} goals={goals} setGoals={setGoals} />
+            <FinancialGoalSetting portfolioValue={totalValue} goals={goals} setGoals={setGoals} financialSummary={financialSummary} />
             <InvestmentGrowthCalculator startingAmount={totalValue} isForPdf={investmentPdfLoading} />
             <RetirementReadinessSimulator startingAmount={totalValue} />
         </>
@@ -704,10 +820,7 @@ const Footer = () => (
 );
 
 const App = () => {
-    const [debtSheetUrl, setDebtSheetUrl] = useState('');
-    const [billSheetUrl, setBillSheetUrl] = useState('');
-    const [incomeSheetUrl, setIncomeSheetUrl] = useState('');
-    const [investmentSheetUrl, setInvestmentSheetUrl] = useState('');
+    const [smartStepsUrl, setSmartStepsUrl] = useState('');
     const [debtData, setDebtData] = useState([]);
     const [billData, setBillData] = useState([]);
     const [incomeData, setIncomeData] = useState([]);
@@ -740,28 +853,22 @@ const App = () => {
     // --- Local Storage & Auto-loading ---
     useEffect(() => {
         // Load all saved data from localStorage on initial mount
-        const savedDebtUrl = localStorage.getItem('debtSheetUrl');
-        const savedBillUrl = localStorage.getItem('billSheetUrl');
-        const savedIncomeUrl = localStorage.getItem('incomeSheetUrl');
-        const savedInvestmentUrl = localStorage.getItem('investmentSheetUrl');
+        const savedUrl = localStorage.getItem('smartStepsUrl');
         const savedRiskProfile = localStorage.getItem('riskProfile');
         const savedGoals = localStorage.getItem('financialGoals');
         const savedExtraPayment = localStorage.getItem('extraMonthlyPayment');
         const savedSnowflakes = localStorage.getItem('snowflakePayments');
         const savedTargetDebt = localStorage.getItem('targetDebt');
 
-        if (savedDebtUrl) setDebtSheetUrl(savedDebtUrl);
-        if (savedBillUrl) setBillSheetUrl(savedBillUrl);
-        if (savedIncomeUrl) setIncomeSheetUrl(savedIncomeUrl);
-        if (savedInvestmentUrl) setInvestmentSheetUrl(savedInvestmentUrl);
+        if (savedUrl) setSmartStepsUrl(savedUrl);
         if (savedRiskProfile) setRiskProfile(JSON.parse(savedRiskProfile));
         if (savedGoals) setGoals(JSON.parse(savedGoals));
         if (savedExtraPayment) setExtraMonthlyPayment(savedExtraPayment);
         if (savedSnowflakes) setSnowflakePayments(JSON.parse(savedSnowflakes));
         if (savedTargetDebt) setTargetDebt(savedTargetDebt);
 
-        if (savedDebtUrl || savedBillUrl || savedIncomeUrl || savedInvestmentUrl) {
-            setTimeout(() => processSheetData(savedDebtUrl, savedBillUrl, savedIncomeUrl, savedInvestmentUrl), 0);
+        if (savedUrl) {
+            setTimeout(() => processSheetData(savedUrl), 0);
         }
     }, []); // Runs only once on initial component mount
 
@@ -772,98 +879,66 @@ const App = () => {
     useEffect(() => { localStorage.setItem('snowflakePayments', JSON.stringify(snowflakePayments)); }, [snowflakePayments]);
     useEffect(() => { localStorage.setItem('targetDebt', targetDebt); }, [targetDebt]);
 
-    const processSheetData = async (debtUrl = debtSheetUrl, billUrl = billSheetUrl, incomeUrl = incomeSheetUrl, investmentUrl = investmentSheetUrl) => {
-        if (!debtUrl && !billUrl && !incomeUrl && !investmentUrl) {
-            setError("Please provide at least one sheet link to load data.");
+    const processSheetData = async (url = smartStepsUrl) => {
+        if (!url) {
+            setError("Please provide your Smart Steps Web App Link.");
             return;
         }
         setLoading(true); setError(null); setDebtData([]); setBillData([]); setIncomeData([]); setInvestmentData([]);
 
-        const fetchData = async (url) => {
-            if (!url) return null;
-            try {
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch data from ${url}. Status: ${response.status}`);
-                }
-                const csvText = await response.text();
-                if (csvText.toLowerCase().includes('<html')) {
-                     throw new Error(`The link for ${url.substring(0,30)}... seems to be a webpage, not a published CSV link. Please check the 'Publish to web' settings.`);
-                }
-                return parseCSV(csvText);
-            } catch (e) {
-                throw new Error(`Network error or invalid link provided. ${e.message}`);
-            }
-        };
-        
-        const normalizeAndValidate = (data, requiredCols, sheetName) => {
-            if (!data || data.length === 0) return [];
-            const firstRow = data[0];
-            const headerMap = {};
-            Object.keys(firstRow).map(h => h.trim().toLowerCase());
-            for (const reqCol of requiredCols) {
-                const foundHeader = Object.keys(firstRow).find(h => h.trim().toLowerCase() === reqCol.toLowerCase());
-                if (!foundHeader) {
-                    throw new Error(`Your '${sheetName}' sheet is missing or has a misspelled required column. It needs: [${requiredCols.join(', ')}].`);
-                }
-                headerMap[reqCol] = foundHeader;
-            }
-            return data.map(row => {
-                const normalizedRow = {};
-                for (const reqCol of requiredCols) {
-                    normalizedRow[reqCol] = row[headerMap[reqCol]];
-                }
-                for(const originalHeader in row){
-                    if(!Object.values(headerMap).includes(originalHeader)){
-                        normalizedRow[originalHeader] = row[originalHeader];
-                    }
-                }
-                return normalizedRow;
-            });
-        };
-
         try {
-            const [fetchedDebtData, fetchedBillData, fetchedIncomeData, fetchedInvestmentData] = await Promise.all([
-                fetchData(debtUrl),
-                fetchData(billUrl),
-                fetchData(incomeUrl),
-                fetchData(investmentUrl)
-            ]);
-
-            if (fetchedDebtData) {
-                const debtCols = ['Debt Name', 'Balance', 'APR', 'minimum payment', 'Debt type'];
-                const normalizedDebts = normalizeAndValidate(fetchedDebtData, debtCols, 'Debts');
-                setDebtData(normalizedDebts.filter(d => d['Debt Name'] && typeof d['Balance'] === 'number'));
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch data. Status: ${response.status}. Please ensure your link is correct and the script is deployed for 'Anyone'.`);
             }
-            if (debtUrl) localStorage.setItem('debtSheetUrl', debtUrl);
-            if (billUrl) localStorage.setItem('billSheetUrl', billUrl);
-            if (incomeUrl) localStorage.setItem('incomeSheetUrl', incomeUrl);
-            if (investmentUrl) localStorage.setItem('investmentSheetUrl', investmentUrl);
+            const data = await response.json();
 
-            if (fetchedBillData && fetchedBillData.length > 0) {
-                const billCols = ['Bill Name', 'Amount', 'Category'];
-                const normalizedBills = normalizeAndValidate(fetchedBillData, billCols, 'Bills');
-                setBillData(normalizedBills.filter(b => b['Bill Name'] && typeof b['Amount'] === 'number'));
+            if (data.error) {
+                throw new Error(`Error from Google Script: ${data.error}`);
             }
 
-            if (fetchedIncomeData && fetchedIncomeData.length > 0) {
-                const incomeCols = ['Income Source', 'Amount', 'Frequency'];
-                const normalizedIncome = normalizeAndValidate(fetchedIncomeData, incomeCols, 'Income');
-                setIncomeData(normalizedIncome.filter(i => i['Income Source'] && typeof i['Amount'] === 'number'));
-            }
+            // --- Normalize and Validate Data ---
+            const normalize = (arr, requiredCols) => {
+                if (!Array.isArray(arr)) return [];
+                return arr.map(row => {
+                    const normalizedRow = {};
+                    for (const col of requiredCols) {
+                        const foundKey = Object.keys(row).find(k => k.trim().toLowerCase() === col.toLowerCase());
+                        let value = foundKey ? row[foundKey] : undefined;
 
-            if (fetchedInvestmentData && fetchedInvestmentData.length > 0) {
-                const investmentCols = ['Investment Name', 'Value', 'Type'];
-                const normalizedInvestments = normalizeAndValidate(fetchedInvestmentData, investmentCols, 'Investments');
-                setInvestmentData(normalizedInvestments.filter(i => i['Investment Name'] && typeof i['Value'] === 'number'));
-            }
+                        // Smart number conversion
+                        if (['balance', 'apr', 'minimum payment', 'amount', 'value', 'expense ratio (%)', 'dividend yield (%)'].includes(col.toLowerCase())) {
+                            if (typeof value === 'string') {
+                                const numericValue = value.replace(/[^0-9.-]+/g,"");
+                                value = isNaN(Number(numericValue)) || numericValue === '' ? 0 : Number(numericValue);
+                            } else if (typeof value !== 'number') {
+                                value = 0;
+                            }
+                        }
+                        normalizedRow[col] = value;
+                    }
+                    return normalizedRow;
+                });
+            };
+
+            const debtCols = ['Debt Name', 'Balance', 'APR', 'minimum payment', 'Debt type'];
+            setDebtData(normalize(data.debts, debtCols).filter(d => d['Debt Name'] && typeof d['Balance'] === 'number'));
+
+            const billCols = ['Bill Name', 'Amount', 'Category'];
+            setBillData(normalize(data.bills, billCols).filter(b => b['Bill Name'] && typeof b['Amount'] === 'number'));
+
+            const incomeCols = ['Income Source', 'Amount', 'Frequency'];
+            setIncomeData(normalize(data.income, incomeCols).filter(i => i['Income Source'] && typeof i['Amount'] === 'number'));
             
+            const investmentCols = ['Investment Name', 'Value', 'Type', 'Expense Ratio (%)', 'Dividend Yield (%)', 'Account Type'];
+            setInvestmentData(normalize(data.investments, investmentCols).filter(i => i['Investment Name'] && typeof i['Value'] === 'number'));
+            
+            localStorage.setItem('smartStepsUrl', url);
             setShowInstructions(false);
             setIsDataLoaded(true);
 
         } catch (err) {
             setError(err.message || 'An unknown error occurred while loading data.');
-            setDebtData([]); setBillData([]); setIncomeData([]); setInvestmentData([]);
             setIsDataLoaded(false);
         } finally {
             setLoading(false);
@@ -871,17 +946,14 @@ const App = () => {
     };
 
     const clearAllData = () => {
-        localStorage.removeItem('debtSheetUrl');
-        localStorage.removeItem('billSheetUrl');
-        localStorage.removeItem('incomeSheetUrl');
-        localStorage.removeItem('investmentSheetUrl');
+        localStorage.removeItem('smartStepsUrl');
         localStorage.removeItem('riskProfile');
         localStorage.removeItem('financialGoals');
         localStorage.removeItem('extraMonthlyPayment');
         localStorage.removeItem('snowflakePayments');
         localStorage.removeItem('targetDebt');
         
-        setDebtSheetUrl(''); setBillSheetUrl(''); setIncomeSheetUrl(''); setInvestmentSheetUrl('');
+        setSmartStepsUrl('');
         setDebtData([]); setBillData([]); setIncomeData([]); setInvestmentData([]);
         setRiskProfile(null);
         setGoals([]);
@@ -1333,24 +1405,9 @@ const App = () => {
                            <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">Get Started</h2>
                             <div className="space-y-4">
                                 <div className="relative">
-                                    <label className="text-sm font-medium text-gray-700">Income Sheet Link (Optional)</label>
-                                    <Briefcase className="absolute left-3 top-10 h-5 w-5 text-gray-400" />
-                                    <input type="text" value={incomeSheetUrl} onChange={(e) => setIncomeSheetUrl(e.target.value)} placeholder="Paste 'Income' published sheet link here" className="mt-1 w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"/>
-                                </div>
-                                <div className="relative">
-                                    <label className="text-sm font-medium text-gray-700">Bills Sheet Link (Optional)</label>
-                                    <ClipboardList className="absolute left-3 top-10 h-5 w-5 text-gray-400" />
-                                    <input type="text" value={billSheetUrl} onChange={(e) => setBillSheetUrl(e.target.value)} placeholder="Paste 'Bills' published sheet link here" className="mt-1 w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"/>
-                                </div>
-                                <div className="relative">
-                                    <label className="text-sm font-medium text-gray-700">Debts Sheet Link (Optional)</label>
-                                    <Sheet className="absolute left-3 top-10 h-5 w-5 text-gray-400" />
-                                    <input type="text" value={debtSheetUrl} onChange={(e) => setDebtSheetUrl(e.target.value)} placeholder="Paste 'Debts' published sheet link here" className="mt-1 w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"/>
-                                </div>
-                                <div className="relative">
-                                    <label className="text-sm font-medium text-gray-700">Investments Sheet Link (Optional)</label>
-                                    <Landmark className="absolute left-3 top-10 h-5 w-5 text-gray-400" />
-                                    <input type="text" value={investmentSheetUrl} onChange={(e) => setInvestmentSheetUrl(e.target.value)} placeholder="Paste 'Investments' published sheet link here" className="mt-1 w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"/>
+                                    <label className="text-sm font-medium text-gray-700">Smart Steps Link</label>
+                                    <Link className="absolute left-3 top-10 h-5 w-5 text-gray-400" />
+                                    <input type="text" value={smartStepsUrl} onChange={(e) => setSmartStepsUrl(e.target.value)} placeholder="Paste your single link from Google Sheets here" className="mt-1 w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"/>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 mt-6">
@@ -1376,7 +1433,7 @@ const App = () => {
                                     {loading ? 'Reloading...' : 'Reload Data'}
                                 </button>
                                 <button onClick={() => setIsDataLoaded(false)} className="text-sm font-semibold text-gray-600 hover:underline flex items-center gap-2">
-                                    <Edit size={14} /> Change Sheet Links
+                                    <Edit size={14} /> Change Sheet Link
                                 </button>
                                 <button onClick={clearAllData} className="text-sm font-semibold text-red-600 hover:underline flex items-center gap-2">
                                     <Trash2 size={14} /> Clear All Data
@@ -1410,12 +1467,22 @@ const App = () => {
                                 />
                                 <div id="income-pie-chart" className="md:col-span-1 bg-white p-4 rounded-lg shadow-md">
                                     <h3 className="text-lg font-bold text-gray-800 mb-2">Income Sources</h3>
-                                    <ResponsiveContainer width="100%" height={100}>
+                                    <ResponsiveContainer width="100%" height={150}>
                                         <PieChart>
-                                            <Pie data={incomeBySource} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={40} fill="#8884d8">
+                                            <Pie 
+                                                data={incomeBySource} 
+                                                dataKey="value" 
+                                                nameKey="name" 
+                                                cx="50%" 
+                                                cy="50%" 
+                                                outerRadius={40} 
+                                                fill="#8884d8"
+                                                label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                                            >
                                                 {incomeBySource.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}
                                             </Pie>
                                             <RechartsTooltip formatter={(value) => `$${value.toLocaleString(undefined, {maximumFractionDigits: 0})}`} />
+                                            <Legend iconSize={10} wrapperStyle={{ fontSize: '12px' }} />
                                         </PieChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -1472,7 +1539,7 @@ const App = () => {
                                                     <label htmlFor="target-debt" className="block text-xs font-medium text-gray-600">Apply To</label>
                                                     <select id="target-debt" value={targetDebt} onChange={e => setTargetDebt(e.target.value)} className="mt-1 block w-full pl-3 pr-8 py-2 text-sm border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md">
                                                         <option value="strategy">Follow Strategy</option>
-                                                        {debtData.map(debt => ( <option key={debt['Debt Name']} value={debt['Debt Name']}> {debt['Debt Name']} </option> ))}
+                                                        {debtData.map((debt, index) => ( <option key={`${debt['Debt Name']}-${index}`} value={debt['Debt Name']}> {debt['Debt Name']} </option> ))}
                                                     </select>
                                                 </div>
                                             </div>
@@ -1524,7 +1591,7 @@ const App = () => {
                                     <table className="w-full text-left text-sm"><thead className="bg-gray-100 text-xs text-gray-700 uppercase"><tr><th className="p-3">Debt Name</th><th className="p-3 text-right">Balance</th><th className="p-3 text-right">APR</th><th className="p-3 text-right">Payoff Date</th><th className="p-3 text-center">Actions</th></tr></thead><tbody>{debtData.map((debt, index) => { const payoffDate = new Date(); payoffDate.setMonth(payoffDate.getMonth() + (payoffData.debtPayoffDates[debt['Debt Name']] || 0)); return ( <tr key={index} className="border-b hover:bg-gray-50"><td className="p-3 font-medium">{debt['Debt Name']}</td><td className="p-3 text-right">${(debt.Balance || 0).toLocaleString()}</td><td className="p-3 text-right">{(debt.APR || 0).toFixed(2)}%</td><td className="p-3 text-right">{payoffData.debtPayoffDates[debt['Debt Name']] ? payoffDate.toLocaleDateString() : 'N/A'}</td><td className="p-3 text-center"><button onClick={() => viewAmortization(debt['Debt Name'])} className="text-blue-600 hover:text-blue-800 text-xs font-semibold">VIEW SCHEDULE</button></td></tr> )})}</tbody></table>
                                 </div>
                             </div>
-                            {billData.length > 0 && <div id="bills-pie-chart" className="bg-white p-6 rounded-lg shadow-md"> <h3 className="text-xl font-bold mb-4 flex items-center"><PieChartIcon className="h-5 w-5 mr-2 text-green-500"/>Monthly Bills by Category</h3> <ResponsiveContainer width="100%" height={300}> <PieChart> <Pie data={billsByCategory} cx="50%" cy="50%" labelLine={false} outerRadius={100} fill="#8884d8" dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}> {billsByCategory.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))} </Pie> <RechartsTooltip formatter={(value) => `$${value.toLocaleString()}`} /> <Legend /> </PieChart> </ResponsiveContainer> </div> }
+                            {billData.length > 0 && <div id="bills-pie-chart" className="bg-white p-6 rounded-lg shadow-md"> <h3 className="text-xl font-bold mb-4 flex items-center"><PieChartIcon className="h-5 w-5 mr-2 text-green-500"/>Monthly Bills by Category</h3> <ResponsiveContainer width="100%" height={300}> <PieChart> <Pie data={billsByCategory} cx="40%" cy="50%" labelLine={false} outerRadius={100} fill="#8884d8" dataKey="value" nameKey="name" label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}> {billsByCategory.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))} </Pie> <RechartsTooltip formatter={(value) => `$${value.toLocaleString()}`} /> <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ right: 0, paddingLeft: '20px' }}/> </PieChart> </ResponsiveContainer> </div> }
                         </div>
                         {billData.length > 0 && ( <div className="bg-white p-6 rounded-lg shadow-md mb-8"> <h3 className="text-xl font-bold mb-4">Bill Details</h3> <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-gray-100 text-xs text-gray-700 uppercase"><tr><th className="p-3">Bill Name</th><th className="p-3">Category</th><th className="p-3 text-right">Amount</th></tr></thead><tbody>{billData.map((bill, index) => ( <tr key={index} className="border-b hover:bg-gray-50"><td className="p-3 font-medium">{bill['Bill Name']}</td><td className="p-3">{bill['Category']}</td><td className="p-3 text-right">${(bill.Amount || 0).toLocaleString()}</td></tr>))}</tbody></table></div></div> )}
                     </>
@@ -1542,6 +1609,7 @@ const App = () => {
                         pdfLibrariesLoaded={pdfLibrariesLoaded}
                         totalValue={totalValue}
                         simplifiedAllocation={simplifiedAllocation}
+                        financialSummary={{ totalMonthlyIncome, totalMonthlyBills, totalMinimumPayment }}
                     />
                 )}
             </div>
