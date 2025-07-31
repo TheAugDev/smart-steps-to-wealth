@@ -11,11 +11,12 @@ const ALLOCATION_COLORS = { 'Growth': '#22c55e', 'Balanced': '#facc15', 'Conserv
 const calculatePayoff = (debts, strategy, extraPayment = 0, snowflakePayments = [], targetDebt = 'strategy') => {
     if (!debts || debts.length === 0) return { history: [], months: 0, totalInterest: 0, amortization: [], debtPayoffDates: {} };
 
-    let currentDebts = JSON.parse(JSON.stringify(debts)).map(d => ({...d, id: d['Debt Name'], interestPaid: 0, amortization: [] }));
+    let currentDebts = JSON.parse(JSON.stringify(debts)).map(d => ({...d, id: d['Debt Name'], interestPaid: 0, amortization: [], originalMinPayment: d['minimum payment'] }));
     let history = [];
     let month = 0;
     let totalInterestPaid = 0;
     let debtPayoffDates = {};
+    const totalMinimums = currentDebts.reduce((sum, d) => sum + d.originalMinPayment, 0);
 
     // Initial state at month 0
     const initialHistoryEntry = { month: 0, totalBalance: currentDebts.reduce((sum, d) => sum + d.Balance, 0) };
@@ -24,11 +25,12 @@ const calculatePayoff = (debts, strategy, extraPayment = 0, snowflakePayments = 
 
     while (currentDebts.some(d => d.Balance > 0)) {
         month++;
-        let monthlyPaymentPool = currentDebts.reduce((sum, d) => sum + d['minimum payment'], 0) + extraPayment;
+        let monthlyPaymentPool = totalMinimums + extraPayment;
         
         const snowflake = snowflakePayments.find(s => s.month === month);
         if (snowflake) { monthlyPaymentPool += snowflake.amount; }
 
+        // 1. Accrue Interest
         currentDebts.forEach(debt => {
             if (debt.Balance > 0) {
                 const monthlyInterest = (debt.Balance * (debt.APR / 100)) / 12;
@@ -38,32 +40,43 @@ const calculatePayoff = (debts, strategy, extraPayment = 0, snowflakePayments = 
             }
         });
         
-        for(const debt of currentDebts) {
-            if (debt.Balance > 0) {
-                const minPayment = Math.min(debt.Balance, debt['minimum payment']);
-                debt.Balance -= minPayment;
-                monthlyPaymentPool -= minPayment;
-                debt.amortization.push({ month, payment: minPayment, interest: (debt.Balance * (debt.APR / 100)) / 12, principal: minPayment - ((debt.Balance * (debt.APR / 100)) / 12), balance: debt.Balance });
+        // 2. Apply payments
+        let paymentOrder;
+        if (strategy === 'avalanche') {
+            paymentOrder = [...currentDebts].sort((a, b) => b.APR - a.APR || a.Balance - b.Balance);
+        } else { // snowball
+            paymentOrder = [...currentDebts].sort((a, b) => a.Balance - b.Balance || b.APR - a.APR);
+        }
+
+        let focusedPaymentOrder = paymentOrder;
+        if (targetDebt !== 'strategy' && currentDebts.find(d => d.id === targetDebt && d.Balance > 0)) {
+            const target = currentDebts.find(d => d.id === targetDebt);
+            const others = paymentOrder.filter(d => d.id !== targetDebt);
+            focusedPaymentOrder = [target, ...others];
+        }
+
+        // Apply minimum payments first
+        for (const debt of currentDebts) {
+            if (debt.Balance > 0 && monthlyPaymentPool > 0) {
+                const payment = Math.min(debt.Balance, debt.originalMinPayment);
+                const interestPart = (debt.Balance * (debt.APR / 100)) / 12;
+                const principalPart = payment - interestPart;
+
+                debt.Balance -= payment;
+                monthlyPaymentPool -= payment;
+                
+                debt.amortization.push({ month, payment, interest: interestPart, principal: principalPart, balance: debt.Balance });
             }
         }
 
-        let basePaymentOrder = strategy === 'avalanche' 
-            ? [...currentDebts].sort((a, b) => b.APR - a.APR || a.Balance - b.Balance) 
-            : [...currentDebts].sort((a, b) => a.Balance - b.Balance || b.APR - a.APR);
-        
-        let extraPaymentOrder;
-        if (targetDebt !== 'strategy' && currentDebts.find(d => d.id === targetDebt && d.Balance > 0)) {
-            extraPaymentOrder = [ currentDebts.find(d => d.id === targetDebt), ...basePaymentOrder.filter(d => d.id !== targetDebt) ].filter(Boolean);
-        } else {
-            extraPaymentOrder = basePaymentOrder;
-        }
-
-        for (const debt of extraPaymentOrder) {
+        // Apply extra payments (snowball/avalanche)
+        for (const debt of focusedPaymentOrder) {
             if (monthlyPaymentPool <= 0) break;
             if (debt.Balance > 0) {
                 const extraPaid = Math.min(monthlyPaymentPool, debt.Balance);
                 debt.Balance -= extraPaid;
                 monthlyPaymentPool -= extraPaid;
+                
                 const lastAmort = debt.amortization.find(a => a.month === month);
                 if (lastAmort) {
                     lastAmort.payment += extraPaid;
@@ -74,7 +87,7 @@ const calculatePayoff = (debts, strategy, extraPayment = 0, snowflakePayments = 
                 }
             }
         }
-        
+
         currentDebts.forEach(debt => {
             if (debt.Balance <= 0 && !debtPayoffDates[debt.id]) {
                 debtPayoffDates[debt.id] = month;
@@ -1872,6 +1885,8 @@ const App = () => {
     const [hiddenDebts, setHiddenDebts] = useState([]); // For chart filtering
     const [riskProfile, setRiskProfile] = useState(null);
     const [goals, setGoals] = useState([]);
+    const [debtTableFilters, setDebtTableFilters] = useState({});
+    const [billTableFilters, setBillTableFilters] = useState({});
 
     // --- AI Feature State ---
     const [showCoachModal, setShowCoachModal] = useState(false);
@@ -2030,14 +2045,38 @@ const App = () => {
         loadScripts();
     }, []);
 
+    // --- Filtered Data ---
+    const handleDebtTableFilterChange = (columnKey, selectedItems) => {
+        setDebtTableFilters(prev => ({ ...prev, [columnKey]: selectedItems }));
+    };
+
+    const handleBillTableFilterChange = (columnKey, selectedItems) => {
+        setBillTableFilters(prev => ({ ...prev, [columnKey]: selectedItems }));
+    };
+
+    const filteredDebtData = useMemo(() => {
+        return debtData.filter(d => {
+            if (!debtTableFilters['Debt Name'] || debtTableFilters['Debt Name'].size === 0) return true;
+            return debtTableFilters['Debt Name'].has(d['Debt Name']);
+        });
+    }, [debtData, debtTableFilters]);
+
+    const filteredBillData = useMemo(() => {
+        return billData.filter(b => {
+            if (!billTableFilters['Bill Name'] || billTableFilters['Bill Name'].size === 0) return true;
+            return billTableFilters['Bill Name'].has(b['Bill Name']);
+        });
+    }, [billData, billTableFilters]);
+
+
     // --- Payoff Calculations ---
     const basePayoff = useMemo(() => {
-        return calculatePayoff(debtData, strategy);
-    }, [debtData, strategy]);
+        return calculatePayoff(filteredDebtData, strategy);
+    }, [filteredDebtData, strategy]);
     
     const scenarioPayoff = useMemo(() => {
-        return calculatePayoff(debtData, strategy, Number(extraMonthlyPayment) || 0, snowflakePayments, targetDebt);
-    }, [debtData, strategy, extraMonthlyPayment, snowflakePayments, targetDebt]);
+        return calculatePayoff(filteredDebtData, strategy, Number(extraMonthlyPayment) || 0, snowflakePayments, targetDebt);
+    }, [filteredDebtData, strategy, extraMonthlyPayment, snowflakePayments, targetDebt]);
     
     useEffect(() => {
         const extraPaymentValue = Number(extraMonthlyPayment) || 0;
@@ -2055,7 +2094,7 @@ const App = () => {
             const entry = { month: i };
             entry['Base Total'] = baseMonth.totalBalance;
             if (scenarioMode) { entry['Scenario Total'] = scenarioMonth.totalBalance; }
-            debtData.forEach(debt => {
+            filteredDebtData.forEach(debt => {
                 const debtName = debt['Debt Name'];
                 entry[`${debtName} (Base)`] = baseMonth[debtName];
                 if (scenarioMode) { entry[`${debtName} (Scenario)`] = scenarioMonth[debtName]; }
@@ -2063,14 +2102,14 @@ const App = () => {
             combined.push(entry);
         }
         return combined;
-    }, [basePayoff, scenarioPayoff, scenarioMode, debtData]);
+    }, [basePayoff, scenarioPayoff, scenarioMode, filteredDebtData]);
 
     const addSnowflake = () => {
         const amount = Number(snowflakeAmount);
         const month = Number(snowflakeMonth);
         if (amount > 0 && month > 0) {
             const newSnowflakes = [...snowflakePayments, { month, amount }];
-            const newScenarioPayoff = calculatePayoff(debtData, strategy, Number(extraMonthlyPayment) || 0, newSnowflakes, targetDebt);
+            const newScenarioPayoff = calculatePayoff(filteredDebtData, strategy, Number(extraMonthlyPayment) || 0, newSnowflakes, targetDebt);
             setImpactData({
                 monthsSaved: basePayoff.months - newScenarioPayoff.months,
                 interestSaved: basePayoff.totalInterest - newScenarioPayoff.totalInterest,
@@ -2090,23 +2129,23 @@ const App = () => {
     };
 
     const { totalDebt, totalMinimumPayment } = useMemo(() => {
-        if (debtData.length === 0) return { totalDebt: 0, totalMinimumPayment: 0 };
-        const totalDebtVal = debtData.reduce((acc, item) => acc + (item.Balance || 0), 0);
-        const totalMinPay = debtData.reduce((acc, item) => acc + (item['minimum payment'] || 0), 0);
+        if (filteredDebtData.length === 0) return { totalDebt: 0, totalMinimumPayment: 0 };
+        const totalDebtVal = filteredDebtData.reduce((acc, item) => acc + (item.Balance || 0), 0);
+        const totalMinPay = filteredDebtData.reduce((acc, item) => acc + (item['minimum payment'] || 0), 0);
         return { totalDebt: totalDebtVal, totalMinimumPayment: totalMinPay };
-    }, [debtData]);
+    }, [filteredDebtData]);
 
     const { totalMonthlyBills, billsByCategory } = useMemo(() => {
-        if(billData.length === 0) return { totalMonthlyBills: 0, billsByCategory: [] };
-        const total = billData.reduce((acc, item) => acc + (item.Amount || 0), 0);
+        if(filteredBillData.length === 0) return { totalMonthlyBills: 0, billsByCategory: [] };
+        const total = filteredBillData.reduce((acc, item) => acc + (item.Amount || 0), 0);
         const categories = {};
-        billData.forEach(bill => {
+        filteredBillData.forEach(bill => {
             const category = bill['Category'] || 'Uncategorized';
             if(!categories[category]) categories[category] = 0;
             categories[category] += bill.Amount || 0;
         });
         return { totalMonthlyBills: total, billsByCategory: Object.keys(categories).map(name => ({name, value: categories[name]})) };
-    }, [billData]);
+    }, [filteredBillData]);
 
     const { totalMonthlyIncome, incomeBySource } = useMemo(() => {
         if(incomeData.length === 0) return { totalMonthlyIncome: 0, incomeBySource: [] };
@@ -2238,13 +2277,13 @@ const App = () => {
             }
     
             // --- Debt Details ---
-            if (debtData.length > 0) {
+            if (filteredDebtData.length > 0) {
                 if (yPos > doc.internal.pageSize.getHeight() - 60) { doc.addPage(); yPos = 20; }
                 doc.setFontSize(16);
                 doc.text("Debt Details", 14, yPos);
                 yPos += 8;
                 const debtHead = [['Debt Name', 'Balance', 'APR (%)', 'Min. Payment', 'Payoff Date']];
-                const debtBody = debtData.map(d => {
+                const debtBody = filteredDebtData.map(d => {
                     const payoffDate = new Date();
                     payoffDate.setMonth(payoffDate.getMonth() + (payoffData.debtPayoffDates[d['Debt Name']] || 0));
                     return [
@@ -2278,13 +2317,13 @@ const App = () => {
             }
     
             // --- Bill Details ---
-            if (billData.length > 0) {
+            if (filteredBillData.length > 0) {
                 if (yPos > doc.internal.pageSize.getHeight() - 60) { doc.addPage(); yPos = 20; }
                 doc.setFontSize(16);
                 doc.text("Monthly Bills", 14, yPos);
                 yPos += 8;
                 const billHead = [['Bill', 'Category', 'Amount']];
-                const billBody = billData.map(b => [b['Bill Name'], b['Category'], `$${b.Amount.toLocaleString()}`]);
+                const billBody = filteredBillData.map(b => [b['Bill Name'], b['Category'], `$${b.Amount.toLocaleString()}`]);
                 doc.autoTable({ startY: yPos, head: billHead, body: billBody, theme: 'striped' });
             }
 
@@ -2438,20 +2477,20 @@ const App = () => {
         setDebtCoachPlan('');
         setHealthStatus('');
 
-        const snowballPayoff = calculatePayoff(debtData, 'snowball');
-        const avalanchePayoff = calculatePayoff(debtData, 'avalanche');
+        const snowballPayoff = calculatePayoff(filteredDebtData, 'snowball');
+        const avalanchePayoff = calculatePayoff(filteredDebtData, 'avalanche');
 
         const prompt = `
             You are an expert Certified Financial Planner (CFP®) specializing in debt elimination strategies. Your goal is to provide a comprehensive, data-driven, and highly personalized "Debt Freedom Plan" that rivals or exceeds the quality of a human financial advisor.
 
             **Client's Financial Dashboard:**
-            - **Total Debt:** $${totalDebt.toLocaleString(undefined, {maximumFractionDigits: 0})} across ${debtData.length} accounts.
+            - **Total Debt:** $${totalDebt.toLocaleString(undefined, {maximumFractionDigits: 0})} across ${filteredDebtData.length} accounts.
             - **Debt-to-Income (DTI) Ratio:** ${debtToIncomeRatio.toFixed(2)}%
             - **Total Monthly Income:** $${totalMonthlyIncome.toLocaleString(undefined, {maximumFractionDigits: 0})}
             - **Surplus Cash Flow (after bills & minimums):** $${(totalMonthlyIncome - totalMonthlyBills - totalMinimumPayment).toLocaleString(undefined, {maximumFractionDigits: 0})} per month.
 
             **Debt Portfolio:**
-            ${debtData.map(d => `- ${d['Debt Name']}: Balance $${d.Balance.toLocaleString()}, APR ${d.APR}%`).join('\n')}
+            ${filteredDebtData.map(d => `- ${d['Debt Name']}: Balance $${d.Balance.toLocaleString()}, APR ${d.APR}%`).join('\n')}
 
             **Strategy Comparison Data:**
             - **Debt Snowball:** Payoff in ${snowballPayoff.months} months, Total Interest Paid $${snowballPayoff.totalInterest.toLocaleString(undefined, {maximumFractionDigits: 0})}.
@@ -2473,7 +2512,7 @@ const App = () => {
             Explain what their ${debtToIncomeRatio.toFixed(2)}% DTI ratio means in the context of financial health (e.g., optimal, manageable, concerning) and why it's a critical metric.
 
             **Strategic Recommendation: Snowball vs. Avalanche:**
-            Provide a detailed, side-by-side comparison using the data above. Clearly state the pros and cons of each. Based on their specific debt structure (number of debts, balance sizes, APRs), provide a definitive recommendation on which strategy is likely best for them and provide a strong justification.
+            Provide a detailed comparison of the two strategies using the data above. **Do not use a markdown table.** Instead, present the information as two separate sections, one for "Debt Snowball" and one for "Debt Avalanche". Under each section, use bullet points to list the Payoff Time, Total Interest Paid, Pros, and Cons. After presenting both, provide a definitive recommendation on which strategy is likely best for them and provide a strong justification.
 
             **The Personalized Debt Freedom Plan:**
             This is the core of your advice. Create a detailed, step-by-step action plan.
@@ -2777,7 +2816,7 @@ const App = () => {
                                                     <label htmlFor="target-debt" className="block text-xs font-medium text-gray-600">Apply To</label>
                                                     <select id="target-debt" value={targetDebt} onChange={e => setTargetDebt(e.target.value)} className="mt-1 block w-full pl-3 pr-8 py-2 text-sm border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md">
                                                         <option value="strategy">Follow Strategy</option>
-                                                        {debtData.map((debt, index) => ( <option key={`${debt['Debt Name']}-${index}`} value={debt['Debt Name']}> {debt['Debt Name']} </option> ))}
+                                                        {filteredDebtData.map((debt, index) => ( <option key={`${debt['Debt Name']}-${index}`} value={debt['Debt Name']}> {debt['Debt Name']} </option> ))}
                                                     </select>
                                                 </div>
                                             </div>
@@ -2817,7 +2856,7 @@ const App = () => {
                                    <RechartsTooltip formatter={(value, name) => [`$${value.toLocaleString()}`, name.replace(' (Base)', '').replace(' (Scenario)', '')]} />
                                    <Legend onClick={handleLegendClick} formatter={renderLegendText} />
                                    {chartView === 'total' && ( <> <Line type="monotone" dataKey="Base Total" name="Base Total" stroke="#8884d8" strokeWidth={2} dot={false}/> {scenarioMode && <Line type="monotone" dataKey="Scenario Total" name="Scenario Total" stroke="#22c55e" strokeWidth={3} dot={false} />} </> )}
-                                   {chartView === 'individual' && debtData.map((debt, index) => { const debtName = debt['Debt Name']; const isHidden = hiddenDebts.includes(debtName); return ( <React.Fragment key={debtName}> <Line type="monotone" dataKey={`${debtName} (Base)`} name={`${debtName} (Base)`} stroke={COLORS[index % COLORS.length]} strokeWidth={2} strokeDasharray="3 3" dot={false} hide={isHidden} /> {scenarioMode && ( <Line type="monotone" dataKey={`${debtName} (Scenario)`} name={`${debtName} (Scenario)`} stroke={COLORS[index % COLORS.length]} strokeWidth={3} dot={false} hide={isHidden} /> )} </React.Fragment> ); })}
+                                   {chartView === 'individual' && filteredDebtData.map((debt, index) => { const debtName = debt['Debt Name']; const isHidden = hiddenDebts.includes(debtName); return ( <React.Fragment key={debtName}> <Line type="monotone" dataKey={`${debtName} (Base)`} name={`${debtName} (Base)`} stroke={COLORS[index % COLORS.length]} strokeWidth={2} strokeDasharray="3 3" dot={false} hide={isHidden} /> {scenarioMode && ( <Line type="monotone" dataKey={`${debtName} (Scenario)`} name={`${debtName} (Scenario)`} stroke={COLORS[index % COLORS.length]} strokeWidth={3} dot={false} hide={isHidden} /> )} </React.Fragment> ); })}
                                </LineChart>
                            </ResponsiveContainer>
                         </div>
@@ -2826,12 +2865,12 @@ const App = () => {
                             <div className="bg-white p-6 rounded-lg shadow-md">
                                 <h3 className="text-xl font-bold mb-4">Debt Details & Amortization</h3>
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-sm"><thead className="bg-gray-100 text-xs text-gray-700 uppercase"><tr><th className="p-3">Debt Name</th><th className="p-3 text-right">Balance</th><th className="p-3 text-right">APR</th><th className="p-3 text-right">Payoff Date</th><th className="p-3 text-center">Actions</th></tr></thead><tbody>{debtData.map((debt, index) => { const payoffDate = new Date(); payoffDate.setMonth(payoffDate.getMonth() + (payoffData.debtPayoffDates[debt['Debt Name']] || 0)); return ( <tr key={index} className="border-b hover:bg-gray-50"><td className="p-3 font-medium">{debt['Debt Name']}</td><td className="p-3 text-right">${(debt.Balance || 0).toLocaleString()}</td><td className="p-3 text-right">{(debt.APR || 0).toFixed(2)}%</td><td className="p-3 text-right">{payoffData.debtPayoffDates[debt['Debt Name']] ? payoffDate.toLocaleDateString() : 'N/A'}</td><td className="p-3 text-center"><button onClick={() => viewAmortization(debt['Debt Name'])} className="text-blue-600 hover:text-blue-800 text-xs font-semibold">VIEW SCHEDULE</button></td></tr> )})}</tbody></table>
+                                    <table className="w-full text-left text-sm"><thead className="bg-gray-100 text-xs text-gray-700 uppercase"><tr><th className="p-3"><FilterDropdown columnKey="Debt Name" title="Debt Name" data={debtData} filters={debtTableFilters} onFilterChange={handleDebtTableFilterChange} /></th><th className="p-3 text-right">Balance</th><th className="p-3 text-right">APR</th><th className="p-3 text-right">Payoff Date</th><th className="p-3 text-center">Actions</th></tr></thead><tbody>{filteredDebtData.map((debt, index) => { const payoffDate = new Date(); payoffDate.setMonth(payoffDate.getMonth() + (payoffData.debtPayoffDates[debt['Debt Name']] || 0)); return ( <tr key={index} className="border-b hover:bg-gray-50"><td className="p-3 font-medium">{debt['Debt Name']}</td><td className="p-3 text-right">${(debt.Balance || 0).toLocaleString()}</td><td className="p-3 text-right">{(debt.APR || 0).toFixed(2)}%</td><td className="p-3 text-right">{payoffData.debtPayoffDates[debt['Debt Name']] ? payoffDate.toLocaleDateString() : 'N/A'}</td><td className="p-3 text-center"><button onClick={() => viewAmortization(debt['Debt Name'])} className="text-blue-600 hover:text-blue-800 text-xs font-semibold">VIEW SCHEDULE</button></td></tr> )})}</tbody></table>
                                 </div>
                             </div>
                             {billData.length > 0 && <div id="bills-pie-chart" className="bg-white p-6 rounded-lg shadow-md"> <h3 className="text-xl font-bold mb-4 flex items-center"><PieChartIcon className="h-5 w-5 mr-2 text-green-500"/>Monthly Bills by Category</h3> <ResponsiveContainer width="100%" height={300}> <PieChart> <Pie data={billsByCategory} cx="40%" cy="50%" labelLine={false} outerRadius={100} fill="#8884d8" dataKey="value" nameKey="name" label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}> {billsByCategory.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))} </Pie> <RechartsTooltip formatter={(value) => `$${value.toLocaleString()}`} /> <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ right: 0, paddingLeft: '20px' }}/> </PieChart> </ResponsiveContainer> </div> }
                         </div>
-                        {billData.length > 0 && ( <div className="bg-white p-6 rounded-lg shadow-md mb-8"> <h3 className="text-xl font-bold mb-4">Bill Details</h3> <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-gray-100 text-xs text-gray-700 uppercase"><tr><th className="p-3">Bill Name</th><th className="p-3">Category</th><th className="p-3 text-right">Amount</th></tr></thead><tbody>{billData.map((bill, index) => ( <tr key={index} className="border-b hover:bg-gray-50"><td className="p-3 font-medium">{bill['Bill Name']}</td><td className="p-3">{bill['Category']}</td><td className="p-3 text-right">${(bill.Amount || 0).toLocaleString()}</td></tr>))}</tbody></table></div></div> )}
+                        {billData.length > 0 && ( <div className="bg-white p-6 rounded-lg shadow-md mb-8"> <h3 className="text-xl font-bold mb-4">Bill Details</h3> <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-gray-100 text-xs text-gray-700 uppercase"><tr><th className="p-3"><FilterDropdown columnKey="Bill Name" title="Bill Name" data={billData} filters={billTableFilters} onFilterChange={handleBillTableFilterChange} /></th><th className="p-3">Category</th><th className="p-3 text-right">Amount</th></tr></thead><tbody>{filteredBillData.map((bill, index) => ( <tr key={index} className="border-b hover:bg-gray-50"><td className="p-3 font-medium">{bill['Bill Name']}</td><td className="p-3">{bill['Category']}</td><td className="p-3 text-right">${(bill.Amount || 0).toLocaleString()}</td></tr>))}</tbody></table></div></div> )}
                     </>
                 )}
 
