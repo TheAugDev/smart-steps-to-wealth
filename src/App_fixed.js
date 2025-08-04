@@ -654,7 +654,7 @@ const CashflowView = ({ incomeData, billData, debtData, transactions, setTransac
             let chatHistory = [];
             chatHistory.push({ role: "user", parts: [{ text: prompt }] });
             const payload = { contents: chatHistory };
-            const apiKey = "";
+            const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -739,7 +739,7 @@ const CashflowView = ({ incomeData, billData, debtData, transactions, setTransac
                         <h3 className="text-xl font-bold">Spending by Category</h3>
                         <button 
                             onClick={generateSpendingInsights} 
-                            disabled={insightsLoading}
+                            disabled={coachLoading}
                             className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center gap-2 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed">
                             {insightsLoading ? <Loader className="animate-spin h-5 w-5" /> : <Sparkles size={16}/>}
                             {insightsLoading ? 'Analyzing...' : 'Get AI Insights'}
@@ -1279,7 +1279,7 @@ const FinancialGoalSetting = ({ portfolioValue, goals, setGoals, financialSummar
             let chatHistory = [];
             chatHistory.push({ role: "user", parts: [{ text: prompt }] });
             const payload = { contents: chatHistory };
-            const apiKey = "" 
+            const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -2532,7 +2532,7 @@ const App = () => {
             let chatHistory = [];
             chatHistory.push({ role: "user", parts: [{ text: prompt }] });
             const payload = { contents: chatHistory };
-            const apiKey = "";
+            const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -2717,8 +2717,8 @@ const App = () => {
                            <StatCard 
                                 icon={<Calendar className="h-6 w-6 text-white"/>} 
                                 title={`Debt-Free In (${strategy.charAt(0).toUpperCase() + strategy.slice(1)})`} 
-                                value={scenarioMode ? `${scenarioPayoff.months} months` : `${basePayoff.months} months`}
-                                baseValue={scenarioMode ? `${basePayoff.months} months` : null}
+                                value={`${basePayoff.months} months`}
+                                baseValue={scenarioMode ? `${scenarioPayoff.months} months` : null}
                                 color="bg-blue-500"
                             />
                         </div>
