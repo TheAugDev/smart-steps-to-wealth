@@ -739,7 +739,7 @@ const CashflowView = ({ incomeData, billData, debtData, transactions, setTransac
                         <h3 className="text-xl font-bold">Spending by Category</h3>
                         <button 
                             onClick={generateSpendingInsights} 
-                            disabled={coachLoading}
+                            disabled={insightsLoading}
                             className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center gap-2 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed">
                             {insightsLoading ? <Loader className="animate-spin h-5 w-5" /> : <Sparkles size={16}/>}
                             {insightsLoading ? 'Analyzing...' : 'Get AI Insights'}
