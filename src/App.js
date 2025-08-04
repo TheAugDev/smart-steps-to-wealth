@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Sector } from 'recharts';
-import { Sheet, DollarSign, Percent, Info, TrendingUp, AlertCircle, Loader, ExternalLink, PieChart as PieChartIcon, ChevronsRight, Award, X, Calendar, Repeat, Download, FileText, RefreshCw, ClipboardList, CheckCircle2, Zap, TrendingDown, Eye, Trash2, Briefcase, Edit, Landmark, Target, PlusCircle, Trash, Shield, BarChart2, Activity, AlertTriangle, GitCommit, Link, Sparkles, ArrowLeftRight, Menu, Home as HomeIcon, LayoutDashboard, BookOpen, Handshake, UploadCloud, ArrowUpCircle, ArrowDownCircle, Banknote, Filter as FilterIcon, Printer, Settings } from 'lucide-react';
+import { Sheet, DollarSign, Percent, Info, TrendingUp, AlertCircle, Loader, ExternalLink, PieChart as PieChartIcon, ChevronsRight, Award, X, Calendar, Repeat, Download, FileText, RefreshCw, ClipboardList, CheckCircle2, Zap, TrendingDown, Eye, Trash2, Briefcase, Edit, Landmark, Target, PlusCircle, Trash, Shield, BarChart2, Activity, AlertTriangle, GitCommit, Link, Sparkles, ArrowLeftRight, Menu, Home as HomeIcon, LayoutDashboard, BookOpen, Handshake, UploadCloud, ArrowUpCircle, ArrowDownCircle, Banknote, Filter as FilterIcon, Printer } from 'lucide-react';
 
 // --- Colors for Charts ---
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#ff4d4d', '#4BC0C0', '#9966FF', '#FF6384', '#36A2EB'];
@@ -739,7 +739,7 @@ const CashflowView = ({ incomeData, billData, debtData, transactions, setTransac
                         <h3 className="text-xl font-bold">Spending by Category</h3>
                         <button 
                             onClick={generateSpendingInsights} 
-                            disabled={coachLoading}
+                            disabled={insightsLoading}
                             className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center gap-2 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed">
                             {insightsLoading ? <Loader className="animate-spin h-5 w-5" /> : <Sparkles size={16}/>}
                             {insightsLoading ? 'Analyzing...' : 'Get AI Insights'}
@@ -1938,8 +1938,7 @@ const App = () => {
     useEffect(() => { localStorage.setItem('manualTransactions', JSON.stringify(transactions)); }, [transactions]);
     useEffect(() => { localStorage.setItem('cashflowSource', cashflowSource); }, [cashflowSource]);
 
-
-    const processSheetData = async (url = smartStepsUrl, shouldNavigate = false) => {
+    const processSheetData = useCallback(async (url = smartStepsUrl, shouldNavigate = false) => {
         if (!url) {
             setError("Please provide your Smart Steps Web App Link.");
             return;
@@ -2006,7 +2005,25 @@ const App = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [smartStepsUrl]);
+
+    // --- Auto-load data when URL is pasted ---
+    useEffect(() => {
+        // Check if the URL looks like a valid Google Apps Script deployment URL
+        const isValidUrl = smartStepsUrl && 
+            smartStepsUrl.includes('script.google.com') && 
+            smartStepsUrl.includes('/exec') &&
+            smartStepsUrl.length > 50; // Basic length check
+
+        if (isValidUrl && !loading && !isDataLoaded) {
+            // Add a small delay to avoid triggering on every character typed
+            const timeoutId = setTimeout(() => {
+                processSheetData();
+            }, 1000); // 1 second delay after user stops typing
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [smartStepsUrl, loading, isDataLoaded, processSheetData]);
 
     const clearAllData = () => {
         localStorage.clear();
