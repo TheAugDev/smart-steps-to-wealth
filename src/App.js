@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Sector } from 'recharts';
-import { Sheet, DollarSign, Percent, Info, TrendingUp, AlertCircle, Loader, ExternalLink, PieChart as PieChartIcon, ChevronsRight, Award, X, Calendar, Repeat, Download, FileText, RefreshCw, ClipboardList, CheckCircle2, Zap, TrendingDown, Eye, Trash2, Briefcase, Edit, Landmark, Target, PlusCircle, Trash, Shield, BarChart2, Activity, AlertTriangle, GitCommit, Link, Sparkles, ArrowLeftRight, Menu, Home as HomeIcon, LayoutDashboard, BookOpen, Handshake, UploadCloud, ArrowUpCircle, ArrowDownCircle, Banknote, Filter as FilterIcon, Printer, Clock } from 'lucide-react';
+import { Sheet, DollarSign, Percent, Info, TrendingUp, AlertCircle, Loader, ExternalLink, PieChart as PieChartIcon, ChevronsRight, Award, X, Calendar, Repeat, Download, FileText, RefreshCw, ClipboardList, CheckCircle2, Zap, TrendingDown, Eye, Trash2, Briefcase, Edit, Landmark, Target, PlusCircle, Trash, Shield, BarChart2, Activity, AlertTriangle, GitCommit, Link, Sparkles, ArrowLeftRight, Menu, Home as HomeIcon, LayoutDashboard, BookOpen, Handshake, UploadCloud, ArrowUpCircle, ArrowDownCircle, Banknote, Filter as FilterIcon, Printer, Clock, Mail, Github } from 'lucide-react';
 
 // --- Colors for Charts ---
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#ff4d4d', '#4BC0C0', '#9966FF', '#FF6384', '#36A2EB'];
@@ -121,7 +121,135 @@ const Tooltip = ({ text, children }) => {
 
 // --- Child Components defined outside App for stability ---
 
-const Instructions = () => ( <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md mb-6 shadow-sm"> <h3 className="text-lg font-semibold flex items-center"><Info className="h-6 w-6 mr-3" />How to use this tool</h3> <div className="text-sm space-y-2 mt-2"> <p>This tool visualizes your financial data from Google Sheets. To get started:</p> <p>1. <strong>Use the Template:</strong> Start by making a copy of the official <a href="https://docs.google.com/spreadsheets/d/1hD7oQM8cgB9EBhs1wHuBgaSFOwLH1a_TGg4jU84vfFw/edit?usp=sharing" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-semibold">Template Sheet <ExternalLink className="h-3 w-3 ml-1 inline"/></a>.</p> <p>2. <strong>Open Apps Script:</strong> Inside your copied sheet, go to <code className="bg-blue-100 text-blue-800 px-1 rounded">Extensions</code> &rarr; <code className="bg-blue-100 text-blue-800 px-1 rounded">Apps Script</code>.</p> <p>3. <strong>Deploy the Script:</strong> In the Apps Script editor, click the blue <code className="bg-blue-100 text-blue-800 px-1 rounded">Deploy</code> button in the top right, then select <code className="bg-blue-100 text-blue-800 px-1 rounded">New deployment</code>.</p> <p>4. <strong>Configure Deployment:</strong> A settings gear icon might appear. Click it and select <code className="bg-blue-100 text-blue-800 px-1 rounded">Web app</code>. In the settings, verify "Execute as" is set to <code className="bg-blue-100 text-blue-800 px-1 rounded">Me</code> and "Who has access" is set to <code className="bg-blue-100 text-blue-800 px-1 rounded">Anyone</code>. Click <code className="bg-blue-100 text-blue-800 px-1 rounded">Deploy</code>.</p> <p>5. <strong>Authorize the Script:</strong> Google will ask for authorization. Click <code className="bg-blue-100 text-blue-800 px-1 rounded">Authorize access</code>, choose your Google Account, and then click <code className="bg-blue-100 text-blue-800 px-1 rounded">Advanced</code> on the warning screen. Finally, click <code className="bg-blue-100 text-blue-800 px-1 rounded">Go to ... (unsafe)</code> and <code className="bg-blue-100 text-blue-800 px-1 rounded">Allow</code>.</p> <p>6. <strong>Get the URL:</strong> After authorizing, copy the provided <code className="bg-blue-100 text-blue-800 px-1 rounded">Web app URL</code>.</p> <p>7. <strong>Paste Your Link Above:</strong> Paste the Web app URL into the input field above to load your data.</p></div></div> );
+const Instructions = () => ( 
+    <div className="bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800/80 p-6 sm:p-8 rounded-3xl mb-8 shadow-2xl shadow-slate-200/50 dark:shadow-slate-900/50 relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-gradient-to-br from-cyan-400/20 to-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-gradient-to-tr from-purple-400/20 to-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div className="relative z-10">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-slate-200 dark:border-slate-800">
+                <div className="flex items-center mb-4 sm:mb-0">
+                    <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl mr-4 shadow-lg shadow-blue-500/20">
+                        <Info className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                        <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Getting Started Guide</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Connect your Google Sheet in a few simple steps.</p>
+                    </div>
+                </div>
+                <a 
+                    href="#" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="group bg-red-600 hover:bg-red-700 text-white pl-3 pr-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg flex items-center space-x-2"
+                    title="Coming Soon: Video Tutorial"
+                >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                    <span>Watch Tutorial</span>
+                    <span className="bg-yellow-300 text-yellow-900 px-2 py-0.5 rounded-full text-xs font-bold ml-2">SOON</span>
+                </a>
+            </div>
+
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column: Steps */}
+                <div className="lg:col-span-2 space-y-3">
+                    <h4 className="text-lg font-bold text-slate-700 dark:text-slate-200 mb-4">Setup Process:</h4>
+                    {[
+                        {
+                            number: 1,
+                            title: "Copy the Google Sheets Template",
+                            content: "Start by making a copy of our official template. This sheet is pre-formatted to work perfectly with the app.",
+                            link: "https://docs.google.com/spreadsheets/d/1hD7oQM8cgB9EBhs1wHuBgaSFOwLH1a_TGg4jU84vfFw/edit?usp=sharing",
+                            icon: FileText
+                        },
+                        {
+                            number: 2,
+                            title: "Input Your Financial Data",
+                            content: "Fill in the 'Debts', 'Income', 'Bills', and 'Investments' tabs with your personal financial information. The sample data can be cleared.",
+                            icon: Edit
+                        },
+                        {
+                            number: 3,
+                            title: "Deploy the Apps Script",
+                            content: "In your sheet, go to Extensions > Apps Script. Click 'Deploy' > 'New deployment'. This creates a secure web app link.",
+                            icon: UploadCloud
+                        },
+                        {
+                            number: 4,
+                            title: "Configure & Authorize",
+                            content: "Set 'Who has access' to 'Anyone' (but only you will have the link). Authorize the script, clicking 'Advanced' and 'Allow' when prompted.",
+                            icon: CheckCircle2
+                        },
+                        {
+                            number: 5,
+                            title: "Connect to the Dashboard",
+                            content: "Copy the final 'Web app URL' and paste it into the input field at the top of this page. Your dashboard will instantly come to life.",
+                            icon: Link
+                        }
+                    ].map((step, index, arr) => (
+                        <div key={step.number} className="flex items-start space-x-4 group">
+                            <div className="flex flex-col items-center">
+                                <div className="flex-shrink-0 w-10 h-10 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 group-hover:border-blue-500 dark:group-hover:border-blue-500 text-slate-500 dark:text-slate-400 group-hover:text-blue-500 rounded-full flex items-center justify-center text-lg font-bold transition-colors duration-300">
+                                    <step.icon className="h-5 w-5" />
+                                </div>
+                                {index < arr.length - 1 && <div className="w-0.5 h-16 bg-slate-200 dark:bg-slate-700 group-hover:bg-blue-300 dark:group-hover:bg-blue-800 transition-colors duration-300"></div>}
+                            </div>
+                            <div className="flex-1 pt-1">
+                                <h5 className="font-bold text-slate-800 dark:text-slate-100">{step.title}</h5>
+                                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{step.content}</p>
+                                {step.link && (
+                                    <a href={step.link} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-semibold mt-2 inline-flex items-center">
+                                        Open Template <ExternalLink className="h-3 w-3 ml-1.5" />
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Right Column: Info Cards */}
+                <div className="lg:col-span-1 space-y-6">
+                    {/* What you'll get */}
+                    <div className="bg-white/60 dark:bg-slate-800/50 backdrop-blur-sm p-5 rounded-xl border border-slate-200/80 dark:border-slate-800/80">
+                        <h4 className="font-bold text-slate-800 dark:text-slate-100 flex items-center mb-3">
+                            <Zap className="h-5 w-5 mr-2 text-green-500" />
+                            Features Unlocked
+                        </h4>
+                        <ul className="text-sm space-y-2 text-slate-600 dark:text-slate-400">
+                            {[
+                                "Debt Payoff Visualizations",
+                                "AI Financial Coach",
+                                "Cashflow Analysis",
+                                "Strategy Comparison",
+                                "Investment Planning",
+                                "Real-time Updates"
+                            ].map(item => (
+                                <li key={item} className="flex items-center">
+                                    <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0" />
+                                    <span>{item}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Privacy */}
+                    <div className="bg-white/60 dark:bg-slate-800/50 backdrop-blur-sm p-5 rounded-xl border border-slate-200/80 dark:border-slate-800/80">
+                        <h4 className="font-bold text-slate-800 dark:text-slate-100 flex items-center mb-3">
+                            <Shield className="h-5 w-5 mr-2 text-blue-500" />
+                            Your Privacy is Paramount
+                        </h4>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                            Your financial data remains securely in your Google Sheet. This app only reads the data to visualize it; we never store, save, or see your personal information.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> 
+);
 const StatCard = ({ icon, title, value, baseValue, color, tooltipText, description }) => ( <div className="bg-white p-4 rounded-lg shadow-md transition-transform hover:scale-105 hover:-translate-y-1"> <div className="flex items-center"> <div className={`p-3 rounded-full mr-4 ${color}`}>{icon}</div> <div> <div className="flex items-center"> <p className="text-sm text-gray-500">{title}</p> {tooltipText && ( <Tooltip text={tooltipText}> <Info size={14} className="ml-1.5 text-gray-400 hover:text-gray-600 cursor-pointer" /> </Tooltip> )} </div> <p className="text-2xl font-bold text-gray-800">{value}</p> </div> </div> {baseValue && value !== baseValue && ( <div className="mt-2 text-sm text-center"> <span className="text-gray-500 line-through">{baseValue}</span> <ChevronsRight className="inline h-4 w-4 mx-1 text-green-500" /> <span className="font-bold text-green-600">{value}</span> </div> )} {description && <p className="text-xs text-gray-500 mt-2">{description}</p>}</div> );
 const ImpactModal = ({ impactData, setShowImpactModal }) => ( <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"> <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full text-center relative"> <button onClick={() => setShowImpactModal(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"><X /></button> <Award className="h-16 w-16 text-yellow-400 mx-auto mb-4" /> <h2 className="text-2xl font-bold text-gray-800 mb-2">Amazing!</h2> <p className="text-lg text-gray-600">That <span className="font-bold text-green-600">${impactData.amount.toLocaleString()}</span> payment made a huge difference!</p> <div className="mt-6 space-y-3"> <div className="bg-green-50 p-3 rounded-lg"> <p className="text-sm text-green-800">You'll be debt-free</p> <p className="text-xl font-bold text-green-600">{impactData.monthsSaved} months sooner!</p> </div> <div className="bg-blue-50 p-3 rounded-lg"> <p className="text-sm text-blue-800">You'll save an extra</p> <p className="text-xl font-bold text-blue-600">${impactData.interestSaved.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} in interest!</p> </div> </div> </div> </div> );
 const AmortizationModal = ({ amortizationData, setShowAmortizationModal }) => ( <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"> <div className="bg-white rounded-lg shadow-2xl p-6 max-w-2xl w-full text-center relative"> <button onClick={() => setShowAmortizationModal(false)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><X /></button> <h2 className="text-2xl font-bold text-gray-800 mb-4">Amortization Schedule for {amortizationData?.id}</h2> <div className="overflow-y-auto h-96"><table className="w-full text-sm text-left"><thead className="bg-gray-100 text-xs text-gray-700 uppercase sticky top-0"><tr><th className="p-2">Month</th><th className="p-2 text-right">Payment</th><th className="p-2 text-right">Principal</th><th className="p-2 text-right">Interest</th><th className="p-2 text-right">Remaining Balance</th></tr></thead><tbody>{amortizationData?.amortization.map(row => ( <tr key={row.month} className="border-b"><td className="p-2">{row.month}</td><td className="p-2 text-right">${row.payment.toFixed(2)}</td><td className="p-2 text-right">${row.principal.toFixed(2)}</td><td className="p-2 text-right">${row.interest.toFixed(2)}</td><td className="p-2 text-right">${row.balance.toFixed(2)}</td></tr>))}</tbody></table></div></div></div> );
@@ -1847,11 +1975,30 @@ const InvestmentPortfolioView = ({ data, riskProfile, setRiskProfile, goals, set
 }
 
 const Footer = () => (
-    <footer className="mt-12 text-center text-gray-500 text-xs">
-        <p>&copy; {new Date().getFullYear()} www.smartstepstowealth.com. All Rights Reserved.</p>
-        <p className="mt-2 max-w-2xl mx-auto">
-            Disclaimer: This tool is for informational and illustrative purposes only and does not constitute financial, legal, or tax advice. The projections and information provided are based on the data you input and certain assumptions, and are not a guarantee of future results. Please consult with a qualified professional before making any financial decisions.
-        </p>
+    <footer className="bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-200/80 dark:border-slate-800/80 mt-16">
+        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
+                <div className="text-sm text-slate-600 dark:text-slate-400 text-center md:text-left">
+                    <p className="font-semibold">Smart Steps to Wealth</p>
+                    <p>&copy; {new Date().getFullYear()} All Rights Reserved.</p>
+                </div>
+                <div className="flex items-center space-x-6">
+                    <a href="https://github.com/TheAugDev/smart-steps-to-wealth" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
+                        <Github className="h-6 w-6" />
+                        <span className="sr-only">GitHub</span>
+                    </a>
+                    <a href="mailto:AugmentedDev@outlook.com" className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
+                        <Mail className="h-6 w-6" />
+                        <span className="sr-only">Email</span>
+                    </a>
+                </div>
+            </div>
+            <div className="mt-8 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 text-xs text-slate-500 dark:text-slate-500">
+                <p className="text-center">
+                    <strong>Disclaimer:</strong> This tool is for informational and illustrative purposes only and does not constitute financial, legal, or tax advice. The projections and information provided are based on the data you input and certain assumptions, and are not a guarantee of future results. Please consult with a qualified professional before making any financial decisions.
+                </p>
+            </div>
+        </div>
     </footer>
 );
 
