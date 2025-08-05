@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Sector } from 'recharts';
-import { Sheet, DollarSign, Percent, Info, TrendingUp, AlertCircle, Loader, ExternalLink, PieChart as PieChartIcon, ChevronsRight, Award, X, Calendar, Repeat, Download, FileText, RefreshCw, ClipboardList, CheckCircle2, Zap, TrendingDown, Eye, Trash2, Briefcase, Edit, Landmark, Target, PlusCircle, Trash, Shield, BarChart2, Activity, AlertTriangle, GitCommit, Link, Sparkles, ArrowLeftRight, Menu, Home as HomeIcon, LayoutDashboard, BookOpen, Handshake, UploadCloud, ArrowUpCircle, ArrowDownCircle, Banknote, Filter as FilterIcon, Printer } from 'lucide-react';
+import { Sheet, DollarSign, Percent, Info, TrendingUp, AlertCircle, Loader, ExternalLink, PieChart as PieChartIcon, ChevronsRight, Award, X, Calendar, Repeat, Download, FileText, RefreshCw, ClipboardList, CheckCircle2, Zap, TrendingDown, Eye, Trash2, Briefcase, Edit, Landmark, Target, PlusCircle, Trash, Shield, BarChart2, Activity, AlertTriangle, GitCommit, Link, Sparkles, ArrowLeftRight, Menu, Home as HomeIcon, LayoutDashboard, BookOpen, Handshake, UploadCloud, ArrowUpCircle, ArrowDownCircle, Banknote, Filter as FilterIcon, Printer, Clock } from 'lucide-react';
 
 // --- Colors for Charts ---
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#ff4d4d', '#4BC0C0', '#9966FF', '#FF6384', '#36A2EB'];
@@ -651,16 +651,17 @@ const CashflowView = ({ incomeData, billData, debtData, transactions, setTransac
         `;
 
         try {
-            let chatHistory = [];
-            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-            const payload = { contents: chatHistory };
-            const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-            const response = await fetch(apiUrl, {
+            // Use Vercel API endpoint instead of direct Gemini API call
+            const response = await fetch('/api/generateAIPlan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ prompt })
             });
+            
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            
             const result = await response.json();
             
             let insightsText = "Could not generate insights at this time. Please try again later.";
@@ -1276,16 +1277,17 @@ const FinancialGoalSetting = ({ portfolioValue, goals, setGoals, financialSummar
         `;
 
         try {
-            let chatHistory = [];
-            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-            const payload = { contents: chatHistory };
-            const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-            const response = await fetch(apiUrl, {
+            // Use Vercel API endpoint instead of direct Gemini API call
+            const response = await fetch('/api/generateAIPlan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ prompt })
             });
+            
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            
             const result = await response.json();
             
             let planText = "Could not generate a plan at this time. Please try again later.";
@@ -2546,16 +2548,17 @@ const App = () => {
         `;
 
         try {
-            let chatHistory = [];
-            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-            const payload = { contents: chatHistory };
-            const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-            const response = await fetch(apiUrl, {
+            // Use Vercel API endpoint instead of direct Gemini API call
+            const response = await fetch('/api/generateAIPlan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ prompt })
             });
+            
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            
             const result = await response.json();
             
             let fullText = "Could not generate a plan at this time. Please try again later.";
@@ -2849,6 +2852,32 @@ const App = () => {
                                     </div>
                                     {snowflakePayments.length > 0 && <ul className="mt-3 space-y-1 max-h-24 overflow-y-auto"> {snowflakePayments.map((p, i) => ( <li key={i} className="flex justify-between items-center bg-white/60 p-1.5 rounded-md text-sm"> <span className="text-gray-700">Extra ${p.amount.toLocaleString()} in month {p.month}</span> <button onClick={() => removeSnowflake(i)} className="text-red-500 hover:text-red-700"><X size={16}/></button> </li> ))} </ul> }
                                 </div>
+                            </div>
+                            
+                            {/* Strategy Summary Status Cards */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                                <StatCard 
+                                    icon={<Clock className="h-7 w-7 text-white"/>} 
+                                    title="Payoff Time" 
+                                    value={`${payoffData.months} months`}
+                                    baseValue={scenarioMode ? `${basePayoff.months} months` : null}
+                                    color="bg-gradient-to-br from-blue-500 to-indigo-600"
+                                />
+                                <StatCard 
+                                    icon={<DollarSign className="h-7 w-7 text-white"/>} 
+                                    title="Total Interest" 
+                                    value={`$${payoffData.totalInterest.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+                                    baseValue={scenarioMode ? `$${basePayoff.totalInterest.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : null}
+                                    color="bg-gradient-to-br from-red-500 to-orange-600"
+                                    tooltipText="Total interest you'll pay over the life of all debts based on your selected strategy and payment plan."
+                                />
+                                <StatCard 
+                                    icon={<Target className="h-7 w-7 text-white"/>} 
+                                    title="Strategy" 
+                                    value={strategy === 'snowball' ? 'Debt Snowball' : 'Debt Avalanche'}
+                                    color="bg-gradient-to-br from-purple-500 to-indigo-600"
+                                    description={strategy === 'snowball' ? 'Smallest balance first' : 'Highest interest first'}
+                                />
                             </div>
                         </div>
 

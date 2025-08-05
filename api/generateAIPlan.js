@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   }
 
   // Securely get the API key from your Vercel Environment Variables
-  const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
     return res.status(500).json({ error: 'API key not configured on the server.' });
