@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Sector } from 'recharts';
-import { Sheet, DollarSign, Percent, Info, TrendingUp, AlertCircle, Loader, ExternalLink, PieChart as PieChartIcon, ChevronsRight, Award, X, Calendar, Repeat, Download, FileText, RefreshCw, ClipboardList, CheckCircle2, Zap, TrendingDown, Eye, Trash2, Briefcase, Edit, Landmark, Target, PlusCircle, Trash, Shield, BarChart2, Activity, AlertTriangle, GitCommit, Link, Sparkles, ArrowLeftRight, Menu, Home as HomeIcon, LayoutDashboard, BookOpen, Handshake, UploadCloud, ArrowUpCircle, ArrowDownCircle, Banknote, Filter as FilterIcon, Printer, Clock, Mail, Github } from 'lucide-react';
+import { Sheet, DollarSign, Percent, Info, TrendingUp, AlertCircle, Loader, ExternalLink, PieChart as PieChartIcon, ChevronsRight, Award, X, Calendar, Repeat, Download, FileText, RefreshCw, ClipboardList, CheckCircle2, Zap, TrendingDown, Eye, Trash2, Briefcase, Edit, Landmark, Target, PlusCircle, Trash, Shield, BarChart2, Activity, AlertTriangle, GitCommit, Link, Sparkles, ArrowLeftRight, Menu, Home as HomeIcon, LayoutDashboard, BookOpen, Handshake, UploadCloud, ArrowUpCircle, ArrowDownCircle, Banknote, Filter as FilterIcon, Printer, Clock, Mail, Github, MessageSquare, Youtube } from 'lucide-react';
 
 // --- Colors for Charts ---
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#ff4d4d', '#4BC0C0', '#9966FF', '#FF6384', '#36A2EB'];
@@ -1983,11 +1983,19 @@ const Footer = () => (
                     <p>&copy; {new Date().getFullYear()} All Rights Reserved.</p>
                 </div>
                 <div className="flex items-center space-x-6">
-                    <a href="https://github.com/TheAugDev/smart-steps-to-wealth" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
+                    <a href="https://github.com/TheAugDev/smart-steps-to-wealth/discussions" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" title="Community & Support">
+                        <MessageSquare className="h-6 w-6" />
+                        <span className="sr-only">Community</span>
+                    </a>
+                    <a href="https://www.youtube.com/@SmartStepsToWealth" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-500 transition-colors" title="YouTube Channel">
+                        <Youtube className="h-6 w-6" />
+                        <span className="sr-only">YouTube</span>
+                    </a>
+                    <a href="https://github.com/TheAugDev/smart-steps-to-wealth" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" title="GitHub Repository">
                         <Github className="h-6 w-6" />
                         <span className="sr-only">GitHub</span>
                     </a>
-                    <a href="mailto:AugmentedDev@outlook.com" className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
+                    <a href="mailto:AugmentedDev@outlook.com" className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" title="Contact">
                         <Mail className="h-6 w-6" />
                         <span className="sr-only">Email</span>
                     </a>
